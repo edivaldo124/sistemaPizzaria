@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block titulo %}Montar pizza{% endblock %}
+{% block pagina_js %}pizza{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/pizza.js') }}"></script>{% endblock %}
+{% block conteudo %}
+    <div class="builder-header"><a class="back-link" href="{{ url_for('cardapio.pagina_cardapio') }}" aria-label="Voltar ao cardápio">←</a><div><p class="eyebrow">Uma pizza só sua</p><h1>Monte sua pizza</h1></div></div>
+    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+
+    <form class="pizza-builder" method="post" action="{{ url_for('carrinho.adicionar_pizza') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <fieldset class="choice-group">
+            <legend>Tamanho</legend>
+            <div class="choice-grid">
+                {% for tamanho in tamanhos %}
+                <label class="choice-card" for="tamanho-{{ tamanho.id }}">
+                    <input type="radio" id="tamanho-{{ tamanho.id }}" name="tamanho_id" value="{{ tamanho.id }}" required>
+                    <strong>{{ tamanho.nome }}</strong><small>até {{ tamanho.max_sabores }} sabor(es)</small>
+                </label>
+                {% else %}
+                <p>Nenhum tamanho disponível.</p>
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <fieldset class="choice-group">
+            <legend>Sabores <small>respeite o máximo do tamanho escolhido</small></legend>
+            <div class="choice-list">
+                {% for sabor in sabores %}
+                <label class="check-row" for="sabor-{{ sabor.id }}">
+                    <input type="checkbox" id="sabor-{{ sabor.id }}" name="sabores_ids" value="{{ sabor.id }}">
+                    <span><strong>{{ sabor.nome }}</strong>{% if sabor.descricao %}<small>{{ sabor.descricao }}</small>{% endif %}</span>
+                </label>
+                {% else %}
+                <p>Nenhum sabor disponível.</p>
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <fieldset class="choice-group">
+            <legend>Massa</legend>
+            <div class="choice-grid choice-grid-small">
+                <label class="choice-card" for="massa-padrao"><input type="radio" id="massa-padrao" name="massa_id" value=""> <strong>Padrão</strong></label>
+                {% for massa in massas %}
+                <label class="choice-card" for="massa-{{ massa.id }}">
+                    <input type="radio" id="massa-{{ massa.id }}" name="massa_id" value="{{ massa.id }}">
+                    <strong>{{ massa.nome }}</strong>{% if massa.preco_adicional %}<small>+{{ massa.preco_adicional | moeda }}</small>{% endif %}
+                </label>
+                {% else %}
+                <p>Nenhuma opção adicional de massa.</p>
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <fieldset class="choice-group">
+            <legend>Borda</legend>
+            <div class="choice-grid choice-grid-small">
+                <label class="choice-card" for="borda-nenhuma"><input type="radio" id="borda-nenhuma" name="borda_id" value=""> <strong>Sem borda</strong></label>
+                {% for borda in bordas %}
+                <label class="choice-card" for="borda-{{ borda.id }}">
+                    <input type="radio" id="borda-{{ borda.id }}" name="borda_id" value="{{ borda.id }}">
+                    <strong>{{ borda.nome }}</strong>{% if borda.preco_adicional %}<small>+{{ borda.preco_adicional | moeda }}</small>{% endif %}
+                </label>
+                {% else %}
+                <p>Nenhuma opção adicional de borda.</p>
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <fieldset class="choice-group">
+            <legend>Adicionais</legend>
+            <div class="choice-list">
+                {% for adicional in adicionais %}
+                <label class="check-row" for="adicional-{{ adicional.id }}">
+                    <input type="checkbox" id="adicional-{{ adicional.id }}" name="adicionais_ids" value="{{ adicional.id }}">
+                    <span><strong>{{ adicional.nome }}</strong>{% if adicional.preco %}<small>+{{ adicional.preco | moeda }}</small>{% endif %}</span>
+                </label>
+                {% else %}
+                <p>Nenhum adicional disponível.</p>
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <div class="form-row"><label for="quantidade">Quantidade<input type="number" id="quantidade" name="quantidade" value="1" min="1"></label><label class="grow" for="observacoes">Observações<textarea id="observacoes" name="observacoes" placeholder="Ex.: sem cebola, bem assada"></textarea></label></div>
+
+        <button class="button button-accent submit-button" type="submit">Adicionar à sacola</button>
+    </form>
+{% endblock %}

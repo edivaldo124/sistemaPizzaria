@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block titulo %}Criar conta{% endblock %}
+{% block pagina_js %}auth{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/auth.js') }}"></script>{% endblock %}
+{% block conteudo %}
+    <section class="auth-page">
+        <div class="auth-card">
+            <div class="auth-intro">
+                <p class="eyebrow">Sua conta</p>
+                <h1>Criar conta</h1>
+            </div>
+            {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+            <form class="auth-form" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="nome">Nome
+                    <input type="text" id="nome" name="nome" value="{{ nome or '' }}" required>
+                </label>
+                <label for="email">E-mail
+                    <input type="email" id="email" name="email" value="{{ email or '' }}" required>
+                </label>
+                <label for="telefone">Telefone
+                    <input type="tel" id="telefone" name="telefone" value="{{ telefone or '' }}">
+                </label>
+                <label for="senha">Senha
+                    <input type="password" id="senha" name="senha" required minlength="8">
+                </label>
+                <label for="confirmacao_senha">Confirmar senha
+                    <input type="password" id="confirmacao_senha" name="confirmacao_senha" required minlength="8">
+                </label>
+                <button class="button button-accent" type="submit">Criar conta</button>
+            </form>
+            <p class="auth-meta">Já tem conta? <a href="{{ url_for('auth.pagina_login') }}">Entrar</a></p>
+            <p class="site-link"><a href="{{ url_for('cardapio.pagina_cardapio') }}">Voltar ao cardápio</a></p>
+        </div>
+    </section>
+{% endblock %}

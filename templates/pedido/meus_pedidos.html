@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}Meus pedidos{% endblock %}
+{% block conteudo %}
+    <h1>Meus pedidos</h1>
+    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+    <table>
+        <thead><tr><th>Número</th><th>Data</th><th>Status</th><th>Total</th><th></th></tr></thead>
+        <tbody>
+            {% for pedido in pedidos %}
+            <tr>
+                <td>{{ pedido.numero }}</td>
+                <td>{{ pedido.criado_em }}</td>
+                <td>{{ pedido.status | status_pedido }}</td>
+                <td>{{ pedido.total | moeda if pedido.total is not none else '-' }}</td>
+                <td><a href="{{ url_for('pedido.acompanhar', numero=pedido.numero) }}">Ver</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">Você ainda não fez nenhum pedido.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p><a href="{{ url_for('auth.minha_conta') }}">Voltar para Minha Conta</a></p>
+    <p><a href="{{ url_for('cardapio.pagina_cardapio') }}">Voltar ao cardápio</a></p>
+{% endblock %}

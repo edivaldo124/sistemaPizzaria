@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block titulo %}Regiões de entrega{% endblock %}
+{% block conteudo %}
+    <h1>Regiões de entrega</h1>
+    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+    <table>
+        <thead><tr><th>Nome</th><th>Taxa</th><th>Ativa</th></tr></thead>
+        <tbody>
+            {% for regiao in regioes %}
+            <tr>
+                <td>{{ regiao.nome }}</td>
+                <td>{{ regiao.taxa_entrega | moeda if regiao.taxa_entrega is not none else '-' }}</td>
+                <td>{{ 'Sim' if regiao.ativo else 'Não' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3">Nenhuma região cadastrada.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Nova região</h2>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="nome">Nome (bairro)</label>
+        <input type="text" id="nome" name="nome" required>
+        <label for="taxa_entrega">Taxa de entrega</label>
+        <input type="number" step="0.01" min="0" id="taxa_entrega" name="taxa_entrega" required placeholder="0.00">
+        <button type="submit">Criar</button>
+    </form>
+
+    <p><a href="{{ url_for('admin.painel') }}">Voltar ao painel</a></p>
+{% endblock %}

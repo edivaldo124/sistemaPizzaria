@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block titulo %}Pedido {{ pedido.numero }}{% endblock %}
+{% block conteudo %}
+    <h1>Pedido {{ pedido.numero }}</h1>
+    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+
+    <p>Tipo: {{ pedido.tipo | tipo_pedido }}</p>
+    <p>Status: {{ pedido.status | status_pedido }}</p>
+    <p>Total: {{ pedido.total | moeda if pedido.total is not none else '-' }}</p>
+    {% if pedido.cliente and pedido.cliente.usuario %}
+    <p>Cliente: {{ pedido.cliente.usuario.nome }}</p>
+    {% endif %}
+    {% if pedido.endereco_entrega %}
+    <p>Endereço: {{ pedido.endereco_entrega.logradouro }}, {{ pedido.endereco_entrega.numero }}{% if pedido.endereco_entrega.complemento %} - {{ pedido.endereco_entrega.complemento }}{% endif %} - {{ pedido.endereco_entrega.bairro }}</p>
+    {% endif %}
+    {% if pedido.pagamento_atual %}
+    <p>Pagamento: {{ pedido.pagamento_atual.forma | forma_pagamento }} - {{ pedido.pagamento_atual.status }}</p>
+    {% endif %}
+
+    {% if usuario_logado and usuario_logado.tipo in ('atendente', 'gerente', 'admin') and pedido.pagamento_atual and pedido.pagamento_atual.status == 'pendente' %}
+    <form method="post" action="{{ url_for('pagamento.aprovar', pedido_id=pedido.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Aprovar pagamento</button>
+    </form>
+    <form method="post" action="{{ url_for('pagamento.recusar', pedido_id=pedido.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Recusar pagamento</button>
+    </form>
+    {% endif %}
+
+    <h2>Itens</h2>
+    <ul>
+        {% for item in pedido.itens %}
+        <li>{{ item.quantidade }}x {{ item.descricao }} - {{ item.subtotal | moeda if item.subtotal is not none else '-' }}{% if item.observacoes %} (Obs: {{ item.observacoes }}){% endif %}</li>
+        {% else %}
+        <li>Nenhum item encontrado.</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Histórico</h2>
+    <ul>
+        {% for evento in pedido.historico %}
+        <li>{{ evento.criado_em }} - {{ evento.status_novo | status_pedido }}{% if evento.observacao %} ({{ evento.observacao }}){% endif %}</li>
+        {% else %}
+        <li>Nenhum histórico registrado.</li>
+        {% endfor %}
+    </ul>
+
+    {% if pedido.pode_cliente_cancelar_diretamente() %}
+    <form method="post" action="{{ url_for('pedido.cancelar', numero=pedido.numero) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Cancelar pedido</button>
+    </form>
+    {% endif %}
+
+    <p><a href="{{ url_for('pedido.meus_pedidos') }}">Voltar aos meus pedidos</a></p>
+    <p><a href="{{ url_for('cardapio.pagina_cardapio') }}">Voltar ao cardápio</a></p>
+{% endblock %}

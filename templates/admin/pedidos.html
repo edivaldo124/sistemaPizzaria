@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}Pedidos{% endblock %}
+{% block conteudo %}
+    <h1>Pedidos (últimos 7 dias)</h1>
+    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+    <table>
+        <thead><tr><th>Número</th><th>Cliente</th><th>Tipo</th><th>Status</th><th>Total</th><th></th></tr></thead>
+        <tbody>
+            {% for pedido in pedidos %}
+            <tr>
+                <td>{{ pedido.numero }}</td>
+                <td>{{ pedido.cliente.usuario.nome if (pedido.cliente and pedido.cliente.usuario) else '-' }}</td>
+                <td>{{ pedido.tipo | tipo_pedido }}</td>
+                <td>{{ pedido.status | status_pedido }}</td>
+                <td>{{ pedido.total | moeda if pedido.total is not none else '-' }}</td>
+                <td><a href="{{ url_for('pedido.acompanhar', numero=pedido.numero) }}">Ver</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">Nenhum pedido no período.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p><a href="{{ url_for('admin.painel') }}">Voltar ao painel</a></p>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block titulo %}Relatórios de vendas{% endblock %}
+{% block conteudo %}
+    <h1>Relatório de vendas</h1>
+
+    <form method="get">
+        <label>De <input type="date" name="inicio" value="{{ inicio.strftime('%Y-%m-%d') }}"></label>
+        <label>Até <input type="date" name="fim" value="{{ fim.strftime('%Y-%m-%d') }}"></label>
+        <button type="submit">Filtrar</button>
+    </form>
+
+    <p>Pedidos no período: {{ dados.quantidade_pedidos }}</p>
+    <p>Total vendido: {{ dados.total_vendas | moeda }}</p>
+
+    <h2>Por forma de pagamento</h2>
+    <table>
+        <thead><tr><th>Forma</th><th>Total</th></tr></thead>
+        <tbody>
+            {% for forma, total in dados.por_forma_pagamento.items() %}
+            <tr><td>{{ forma | forma_pagamento }}</td><td>{{ total | moeda }}</td></tr>
+            {% else %}
+            <tr><td colspan="2">Sem dados no período.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Produtos mais vendidos</h2>
+    <table>
+        <thead><tr><th>Produto</th><th>Quantidade</th><th>Total</th></tr></thead>
+        <tbody>
+            {% for nome, info in dados.por_produto.items() %}
+            <tr><td>{{ nome }}</td><td>{{ info.quantidade }}</td><td>{{ info.total | moeda }}</td></tr>
+            {% else %}
+            <tr><td colspan="3">Sem dados no período.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Sabores mais vendidos</h2>
+    <table>
+        <thead><tr><th>Sabor</th><th>Quantidade</th></tr></thead>
+        <tbody>
+            {% for nome, info in dados.por_sabor.items() %}
+            <tr><td>{{ nome }}</td><td>{{ info.quantidade }}</td></tr>
+            {% else %}
+            <tr><td colspan="2">Sem dados no período.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Pedidos por horário</h2>
+    <table>
+        <thead><tr><th>Hora</th><th>Pedidos</th></tr></thead>
+        <tbody>
+            {% for hora, quantidade in dados.por_hora.items() %}
+            <tr><td>{{ '%02d:00' | format(hora) }}</td><td>{{ quantidade }}</td></tr>
+            {% else %}
+            <tr><td colspan="2">Sem dados no período.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

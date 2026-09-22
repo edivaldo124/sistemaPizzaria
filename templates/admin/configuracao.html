@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block titulo %}Configuração da loja{% endblock %}
+{% block conteudo %}
+    <h1>Configuração da loja</h1>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <label>Horário de abertura
+            <input type="time" name="horario_abertura" value="{{ config.horario_abertura.strftime('%H:%M') if config.horario_abertura else '' }}">
+        </label>
+        <label>Horário de fechamento
+            <input type="time" name="horario_fechamento" value="{{ config.horario_fechamento.strftime('%H:%M') if config.horario_fechamento else '' }}">
+        </label>
+        <label>Valor mínimo do pedido
+            <input type="text" name="valor_minimo_pedido" value="{{ config.valor_minimo_pedido }}">
+        </label>
+
+        <fieldset>
+            <legend>Preço de pizza com múltiplos sabores (RN03)</legend>
+            <label>
+                <input type="radio" name="regra_preco_multiplos_sabores" value="maior_valor"
+                    {{ 'checked' if config.regra_preco_multiplos_sabores == 'maior_valor' }}>
+                Cobrar o valor do sabor mais caro
+            </label>
+            <label>
+                <input type="radio" name="regra_preco_multiplos_sabores" value="media"
+                    {{ 'checked' if config.regra_preco_multiplos_sabores == 'media' }}>
+                Cobrar a média entre os sabores
+            </label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Fora do horário de atendimento (RN18)</legend>
+            <label>
+                <input type="radio" name="fora_horario" value="bloquear"
+                    {{ 'checked' if config.fora_horario == 'bloquear' }}>
+                Bloquear novos pedidos
+            </label>
+            <label>
+                <input type="radio" name="fora_horario" value="agendar"
+                    {{ 'checked' if config.fora_horario == 'agendar' }}>
+                Permitir agendamento
+            </label>
+        </fieldset>
+
+        <label>
+            <input type="checkbox" name="permite_cupom_acumulado" {{ 'checked' if config.permite_cupom_acumulado }}>
+            Permitir acumular mais de um cupom no mesmo pedido
+        </label>
+
+        <button type="submit">Salvar</button>
+    </form>
+{% endblock %}

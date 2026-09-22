@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar{% endblock %}
+{% block pagina_js %}auth{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/auth.js') }}"></script>{% endblock %}
+{% block conteudo %}
+    <section class="auth-page">
+        <div class="auth-card">
+            <div class="auth-intro">
+                <p class="eyebrow">Bem-vindo</p>
+                <h1>Entrar</h1>
+            </div>
+            {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+            <form class="auth-form" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="email">E-mail
+                    <input type="email" id="email" name="email" value="{{ email or '' }}" required>
+                </label>
+                <label for="senha">Senha
+                    <input type="password" id="senha" name="senha" required>
+                </label>
+                <button class="button button-accent" type="submit">Entrar</button>
+            </form>
+            <p class="auth-meta">Não tem conta? <a href="{{ url_for('auth.pagina_cadastro') }}">Cadastre-se</a></p>
+            <p class="site-link"><a href="{{ url_for('cardapio.pagina_cardapio') }}">Voltar ao cardápio</a></p>
+        </div>
+    </section>
+{% endblock %}

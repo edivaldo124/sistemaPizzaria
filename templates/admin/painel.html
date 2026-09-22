@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Administração{% endblock %}
+{% block conteudo %}
+    <h1>Painel administrativo</h1>
+    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+    <ul>
+        <li><a href="{{ url_for('admin.categorias') }}">Categorias</a></li>
+        <li><a href="{{ url_for('admin.produtos') }}">Produtos</a></li>
+        <li><a href="{{ url_for('admin.regioes_entrega') }}">Regiões de entrega</a></li>
+        <li><a href="{{ url_for('admin.funcionarios') }}">Funcionários</a></li>
+        <li><a href="{{ url_for('admin.pedidos') }}">Pedidos</a></li>
+        <li><a href="{{ url_for('admin.relatorios') }}">Relatórios de vendas</a></li>
+        <li><a href="{{ url_for('admin.configuracao') }}">Configuração da loja</a></li>
+        <li><a href="{{ url_for('cozinha.fila_pedidos') }}">Fila da cozinha</a></li>
+        <li><a href="{{ url_for('entrega.despacho') }}">Despacho de entregas</a></li>
+    </ul>
+
+    <h2>Pedidos nas últimas 24h</h2>
+    <p>Total: {{ pedidos_hoje | length }}</p>
+    <p>Faturamento: {{ pedidos_hoje | sum(attribute='total') | moeda }}</p>
+    {% if not pedidos_hoje %}
+    <p>Nenhum pedido registrado nas últimas 24h.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('cardapio.pagina_cardapio') }}">Voltar ao cardápio</a></p>
+{% endblock %}

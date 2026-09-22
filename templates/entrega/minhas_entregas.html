@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titulo %}Minhas entregas{% endblock %}
+{% block conteudo %}
+    <h1>Minhas entregas</h1>
+    {% for entrega in entregas %}
+        {% set pedido = entrega.pedido %}
+        <article>
+            <h2>Pedido {{ pedido.numero }}</h2>
+            <p>Endereço: {{ pedido.endereco_entrega }}</p>
+            {% if pedido.endereco_entrega %}
+            <p><a href="{{ url_google_maps(pedido.endereco_entrega) }}" target="_blank" rel="noopener noreferrer">Abrir rota no Google Maps</a></p>
+            {% endif %}
+            {% if pedido.endereco_entrega and pedido.endereco_entrega.referencia %}
+            <p>Referência: {{ pedido.endereco_entrega.referencia }}</p>
+            {% endif %}
+            <p>Contato: {{ pedido.cliente.usuario.nome if pedido.cliente else '-' }} - {{ pedido.cliente.usuario.telefone if pedido.cliente else '-' }}</p>
+            <p>Pagamento: {{ pedido.pagamento_atual.forma | forma_pagamento if pedido.pagamento_atual else '-' }}
+                {% if pedido.pagamento_atual and pedido.pagamento_atual.troco_para %}
+                    (troco para {{ pedido.pagamento_atual.troco_para | moeda }})
+                {% endif %}
+            </p>
+            {% if pedido.observacoes %}<p>Observações: {{ pedido.observacoes }}</p>{% endif %}
+            <form method="post" action="{{ url_for('entrega.marcar_entregue', pedido_id=pedido.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit">Marcar como entregue</button>
+            </form>
+        </article>
+    {% else %}
+    <p>Nenhuma entrega atribuída no momento.</p>
+    {% endfor %}
+{% endblock %}

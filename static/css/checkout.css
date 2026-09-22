@@ -1,0 +1,58 @@
+.checkout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.9fr);
+  gap: 22px;
+  align-items: start;
+}
+.checkout-form {
+  display: grid;
+  gap: 20px;
+}
+.checkout-fieldset {
+  margin: 0 0 18px;
+  padding: 0;
+  border: 0;
+}
+.checkout-fieldset legend {
+  margin-bottom: 12px;
+  font: 700 1.35rem var(--font-display);
+}
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.choice-grid-small {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.choice-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 82px;
+  padding: 16px 12px;
+  border: 1px solid rgba(53,43,39,0.2);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.32);
+  text-align: center;
+  cursor: pointer;
+}
+.choice-card input {
+  accent-color: var(--tomato);
+}
+.choice-card:has(input:checked) {
+  background: linear-gradient(135deg, rgba(234,176,77,0.18), rgba(181,75,43,0.08));
+  border-color: rgba(181,75,43,0.5);
+}
+.field-stack, .cash-row {
+  display: grid;
+  gap: 8px;
+}
+.cash-row { margin-top: 18px; }
+
+@media (max-width: 760px) {
+  .choice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .checkout-grid { grid-template-columns: 1fr; }
+}

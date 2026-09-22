@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block titulo %}Carrinho{% endblock %}
+{% block pagina_js %}carrinho{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/carrinho.js') }}"></script>{% endblock %}
+{% block conteudo %}
+    <div class="content-header">
+        <p class="eyebrow">Sua sacola</p>
+        <h1>Carrinho</h1>
+    </div>
+    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+
+    {% if itens %}
+    <div class="cart-layout">
+        <section class="cart-panel panel-card">
+            <table class="cart-table">
+                <thead>
+                    <tr><th>Item</th><th>Qtd.</th><th>Preço unit.</th><th>Total</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for linha in itens %}
+                    <tr>
+                        <td>
+                            <div class="item-column">
+                                {% if linha.item.produto %}
+                                    <strong>{{ linha.item.produto.nome }}</strong>
+                                {% else %}
+                                    <strong>Pizza {{ linha.item.tamanho.nome if linha.item.tamanho else '' }}</strong>
+                                    {% if linha.item.sabores %}<span>({{ linha.item.sabores | map(attribute='sabor.nome') | join(' + ') }})</span>{% endif %}
+                                    {% if linha.item.massa %}<span>massa {{ linha.item.massa.nome }}</span>{% endif %}
+                                    {% if linha.item.borda %}<span>borda {{ linha.item.borda.nome }}</span>{% endif %}
+                                    {% if linha.item.adicionais %}<span>adicionais: {{ linha.item.adicionais | map(attribute='adicional.nome') | join(', ') }}</span>{% endif %}
+                                {% endif %}
+                                {% if linha.item.observacoes %}<p>Obs: {{ linha.item.observacoes }}</p>{% endif %}
+                                {% if linha.aviso %}<p class="erro minor-erro">{{ linha.aviso }}</p>{% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <form class="qty-form" method="post" action="{{ url_for('carrinho.atualizar_quantidade', item_id=linha.item.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <label for="quantidade-{{ linha.item.id }}">Qtd.</label>
+                                <input type="number" id="quantidade-{{ linha.item.id }}" name="quantidade" value="{{ linha.item.quantidade }}" min="0">
+                                <button class="button button-ghost" type="submit">Atualizar</button>
+                            </form>
+                        </td>
+                        <td>{{ linha.preco_unitario | moeda if linha.preco_unitario is not none else '-' }}</td>
+                        <td>{{ linha.total | moeda if linha.total is not none else '-' }}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('carrinho.remover_item', item_id=linha.item.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="button button-ghost" type="submit">Remover</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <aside class="summary-box">
+            <div>
+                <p class="eyebrow">Resumo</p>
+                <h2>Pedido</h2>
+            </div>
+            <div class="summary-row"><span>Subtotal</span><strong>{{ subtotal | moeda }}</strong></div>
+            <div class="summary-actions">
+                <a class="button button-accent" href="{{ url_for('pedido.checkout') }}">Finalizar pedido</a>
+                <a class="button button-ghost" href="{{ url_for('cardapio.pagina_cardapio') }}">Continuar comprando</a>
+            </div>
+        </aside>
+    </div>
+    {% else %}
+        <div class="empty-state-box">
+            <p class="eyebrow">Seu carrinho está vazio</p>
+            <h2>Que tal escolher um sabor agora?</h2>
+            <p>Você ainda não adicionou nenhum item à sacola.</p>
+            <a class="button button-accent" href="{{ url_for('cardapio.pagina_cardapio') }}">Ver cardápio</a>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block titulo %}Meus endereços{% endblock %}
+{% block conteudo %}
+    <h1>Meus endereços</h1>
+    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+
+    <table>
+        <thead>
+            <tr><th>Apelido</th><th>Endereço</th><th>Bairro</th><th>Região</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for endereco in enderecos %}
+            <tr>
+                <td>{{ endereco.apelido or '-' }}</td>
+                <td>{{ endereco.logradouro }}, {{ endereco.numero }}{% if endereco.complemento %} - {{ endereco.complemento }}{% endif %}</td>
+                <td>{{ endereco.bairro }} - {{ endereco.cidade }}/{{ endereco.uf }}</td>
+                <td>{{ endereco.regiao_entrega.nome if endereco.regiao_entrega else 'não definida' }}</td>
+                <td>
+                    <form method="post" action="{{ url_for('endereco.remover', endereco_id=endereco.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit">Remover</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">Nenhum endereço cadastrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Novo endereço</h2>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="apelido">Apelido</label>
+        <input type="text" id="apelido" name="apelido">
+
+        <label for="logradouro">Logradouro</label>
+        <input type="text" id="logradouro" name="logradouro" required>
+
+        <label for="numero">Número</label>
+        <input type="text" id="numero" name="numero" required>
+
+        <label for="complemento">Complemento</label>
+        <input type="text" id="complemento" name="complemento">
+
+        <label for="bairro">Bairro</label>
+        <input type="text" id="bairro" name="bairro" required>
+
+        <label for="cidade">Cidade</label>
+        <input type="text" id="cidade" name="cidade" required>
+
+        <label for="uf">UF</label>
+        <input type="text" id="uf" name="uf" maxlength="2" required>
+
+        <label for="cep">CEP</label>
+        <input type="text" id="cep" name="cep">
+
+        <label for="referencia">Ponto de referência</label>
+        <input type="text" id="referencia" name="referencia">
+
+        <label for="regiao_entrega_id">Região de entrega</label>
+        <select id="regiao_entrega_id" name="regiao_entrega_id" required>
+            <option value="">Selecione...</option>
+            {% for regiao in regioes %}
+            <option value="{{ regiao.id }}">{{ regiao.nome }} (taxa: {{ regiao.taxa_entrega | moeda }})</option>
+            {% else %}
+            <option value="" disabled>Nenhuma região disponível</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Salvar endereço</button>
+    </form>
+
+    <p><a href="{{ url_for('auth.minha_conta') }}">Voltar para Minha Conta</a></p>
+    <p><a href="{{ url_for('cardapio.pagina_cardapio') }}">Voltar ao cardápio</a></p>
+{% endblock %}

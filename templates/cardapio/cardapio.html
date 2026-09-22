@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}Cardápio{% endblock %}
+{% block pagina_js %}cardapio{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/cardapio.js') }}"></script>{% endblock %}
+{% block conteudo %}
+    <section class="menu-hero">
+        <div class="hero-copy-wrap">
+            <p class="eyebrow">Pizzaria Mandacaru</p>
+            <h1>Direto do forno,<br><em>do seu jeito.</em></h1>
+            <p class="hero-copy">Sabores da casa, massa leve e aquele calor que chega antes da primeira mordida.</p>
+        </div>
+        <div class="pizza-sun" aria-hidden="true"><span></span></div>
+    </section>
+    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+
+    <div class="menu-toolbar">
+        <div><span class="section-kicker">O cardápio de hoje</span><h2>Escolha sua fome</h2></div>
+        <a class="button button-accent" href="{{ url_for('cardapio.montar_pizza') }}">Montar minha pizza</a>
+    </div>
+
+    <div class="menu-sections">
+    {% for categoria in categorias %}
+        <section class="menu-section">
+            <div class="section-heading"><h2>{{ categoria.nome }}</h2><span class="section-rule"></span></div>
+            <ul class="product-list">
+                {% for produto in produtos if produto.categoria_id == categoria.id %}
+                <li class="product-row">
+                    <div class="product-info"><strong>{{ produto.nome }}</strong>{% if produto.descricao %}<p>{{ produto.descricao }}</p>{% endif %}</div>
+                    <span class="product-price">{{ produto.preco | moeda }}</span>
+                    <div class="product-actions">
+                        <form method="post" action="{{ url_for('carrinho.adicionar_produto') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="produto_id" value="{{ produto.id }}">
+                            <input type="hidden" name="quantidade" value="1">
+                            <input type="hidden" name="observacoes" value="">
+                            <button class="add-button" type="submit" aria-label="Adicionar {{ produto.nome }}">+</button>
+                        </form>
+                    </div>
+                </li>
+                {% else %}
+                <li class="empty-state">Nenhum produto disponível nesta categoria.</li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% else %}
+        <p class="empty-state">Nenhuma categoria disponível no momento.</p>
+    {% endfor %}
+    </div>
+{% endblock %}
