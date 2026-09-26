@@ -20,8 +20,19 @@ if not app.secret_key:
 database_url = os.environ.get('DATABASE_URL')
 if not database_url:
     raise RuntimeError('A variável de ambiente DATABASE_URL é obrigatória.')
+# Alguns provedores ainda entregam o esquema antigo "postgres://", que o SQLAlchemy 2 recusa.
+if database_url.startswith('postgres://'):
+    database_url = 'postgresql://' + database_url[len('postgres://'):]
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+if database_url.startswith('postgresql'):
+    if os.environ.get('VERCEL'):
+        # Serverless: cada instância é congelada entre requisições, então não vale manter
+        # pool próprio; o pooler do Supabase (porta 6543) é quem reaproveita as conexões.
+        from sqlalchemy.pool import NullPool
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'poolclass': NullPool}
+    else:
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True}
 
 cookie_secure = (os.environ.get('COOKIE_SECURE', 'false').strip().lower() == 'true')
 
@@ -67,6 +78,10 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(endereco_bp)
 app.register_blueprint(entrega_bp)
 app.register_blueprint(pagamento_bp)
+
+from comandos import registrar_comandos  # noqa: E402
+
+registrar_comandos(app)
 
 from servicos.formatacao import formatar_moeda, rotulo_forma_pagamento, rotulo_status_pedido, rotulo_tipo_pedido  # noqa: E402
 from servicos.integracoes import url_google_maps  # noqa: E402

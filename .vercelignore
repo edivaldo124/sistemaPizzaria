@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+.env
+instance/
+logs/
+uploads/
+tests/
+scripts/
+graphify-out/
+.pytest_cache/
+.playwright-mcp/
+static/imagens/
+security_best_practices_report.md

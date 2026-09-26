@@ -30,3 +30,26 @@ def test_api_login_rejeita_credencial_invalida(client, db):
 
     assert resposta.status_code == 401
     assert resposta.get_json()['erro'] == 'E-mail ou senha inválidos.'
+
+def test_comando_criar_admin_cria_conta_de_administrador(app, monkeypatch):
+    from dao.usuario_dao import UsuarioDAO
+
+    monkeypatch.setattr('comandos.getpass.getpass', lambda _rotulo: 'Forno-a-lenha-2026')
+    resultado = app.test_cli_runner().invoke(
+        args=['criar-admin', '--nome', 'Dona Maria', '--email', 'Admin@Example.com'],
+    )
+
+    assert resultado.exit_code == 0, resultado.output
+    usuario = UsuarioDAO.buscar_por_email('admin@example.com')
+    assert usuario.tipo == 'admin'
+    assert usuario.is_gerencia
+
+
+def test_comando_criar_admin_recusa_senha_fraca(app, monkeypatch):
+    monkeypatch.setattr('comandos.getpass.getpass', lambda _rotulo: '123')
+    resultado = app.test_cli_runner().invoke(
+        args=['criar-admin', '--nome', 'Dona Maria', '--email', 'admin@example.com'],
+    )
+
+    assert resultado.exit_code != 0
+    assert 'pelo menos 8' in resultado.output
