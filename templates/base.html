@@ -10,10 +10,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/cart.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pizza.css') }}">
+    {% block head %}{% endblock %}
 </head>
-<body class="site-shell" data-page="{% block pagina_js %}base{% endblock %}">
+<body class="site-shell {% block corpo_classe %}{% endblock %}" data-page="{% block pagina_js %}base{% endblock %}">
     <header class="site-header">
-        <a class="brand" href="{{ url_for('cardapio.pagina_cardapio') }}" aria-label="Voltar ao cardápio">
+        <a class="brand" href="{{ url_for('cardapio.pagina_inicial') }}" aria-label="Voltar à página inicial">
             <span class="brand-mark" aria-hidden="true">✦</span>
             <span class="brand-copy"><strong>Mandacaru</strong><small>pizzaria de quintal</small></span>
         </a>

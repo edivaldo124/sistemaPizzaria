@@ -1,4 +1,8 @@
 import os
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 os.environ.setdefault('SECRET_KEY', 'chave-de-teste')
 os.environ.setdefault('DATABASE_URL', 'sqlite:///:memory:')

@@ -1,0 +1,369 @@
+/* ==========================================================================
+   Página Inicial - Mandacaru Pizzaria de Quintal
+   Hero de vídeo scrubbeado e seção de destaques
+   ========================================================================== */
+
+/* Fontes servidas localmente: o CSP (style-src 'self') bloqueia o Google Fonts. Licença OFL. */
+@font-face {
+  font-family: 'Alfa Slab One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/alfa-slab-one-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Kaushan Script';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/kaushan-script-latin.woff2') format('woff2');
+}
+
+/* Ajuste de casca para sangria total (full-bleed) */
+body.pagina-inicio {
+  background: #141110;
+  color: #F4E9D4;
+}
+
+body.pagina-inicio .site-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 30;
+  background: linear-gradient(180deg, rgba(20, 17, 16, 0.95) 0%, rgba(20, 17, 16, 0.7) 60%, transparent 100%);
+  border-bottom: 1px solid rgba(237, 181, 43, 0.2);
+}
+
+body.pagina-inicio .page-content {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Hero Section
+   -------------------------------------------------------------------------- */
+.video-hero {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100vh;
+  overflow: hidden;
+  background-color: #141110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-hero.video-hero--locked {
+  touch-action: none;
+}
+
+/* Vídeo em tela cheia */
+.video-hero__video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.video-hero__video.is-ready {
+  opacity: 1;
+}
+
+/* Camada de escurecimento sobre o vídeo */
+.video-hero__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(20, 17, 16, 0.45) 0%, rgba(20, 17, 16, 0.85) 100%);
+}
+
+/* Botão "Ver cardápio" no canto superior direito do hero, logo abaixo do cabeçalho */
+.video-hero__skip {
+  position: absolute;
+  top: calc(var(--altura-cabecalho, 82px) + 16px);
+  right: clamp(16px, 3.5vw, 36px);
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px 22px;
+  background-color: #171313;
+  color: #F4E9D4;
+  border: 1px solid rgba(244, 233, 212, 0.35);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  pointer-events: auto;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.video-hero__skip:hover,
+.video-hero__skip:focus-visible {
+  background-color: #F4E9D4;
+  color: #171313;
+  border-color: #F4E9D4;
+  transform: translateY(-2px);
+}
+
+/* Conteúdo central (Título e Tagline) */
+.video-hero__content {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 20px;
+  pointer-events: none;
+}
+
+.video-hero__title {
+  font-family: 'Alfa Slab One', Impact, sans-serif;
+  font-size: clamp(48px, 12vw, 130px);
+  color: #F4E9D4;
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0;
+  text-shadow: 0 6px 30px rgba(0, 0, 0, 0.85);
+  will-change: transform, opacity, filter;
+}
+
+.video-hero__tagline {
+  font-family: 'Kaushan Script', cursive, sans-serif;
+  font-size: clamp(28px, 5.5vw, 62px);
+  color: #E8553A;
+  margin: 18px 0 0;
+  line-height: 1.2;
+  opacity: 0;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
+  will-change: transform, opacity;
+}
+
+/* Dica de rolagem (ROLE + seta saltitante) */
+.video-hero__hint {
+  position: absolute;
+  bottom: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: #F4E9D4;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.video-hero__hint-text {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.video-hero__hint-icon {
+  animation: videoHeroBounce 1.8s infinite ease-in-out;
+}
+
+@keyframes videoHeroBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+/* Barra de progresso inferior */
+.video-hero__progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  z-index: 5;
+  background: rgba(244, 233, 212, 0.12);
+  pointer-events: none;
+}
+
+.video-hero__progress-bar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #B8321F 0%, #E3A92B 100%);
+  transform-origin: left center;
+  transform: scaleX(0);
+  will-change: transform;
+}
+
+/* --------------------------------------------------------------------------
+   Seção "Destaques da casa"
+   -------------------------------------------------------------------------- */
+.destaques {
+  background-color: #141110;
+  color: #F4E9D4;
+  padding: 80px 0 100px;
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid rgba(237, 181, 43, 0.15);
+}
+
+.destaques__container {
+  width: min(1200px, calc(100% - 34px));
+  margin: 0 auto;
+}
+
+.destaques__header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 50px;
+}
+
+.destaques__titulo {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4.5vw, 54px);
+  color: #fffaf2;
+  margin: 8px 0 14px;
+}
+
+.destaques__subtitulo {
+  color: rgba(244, 233, 212, 0.78);
+  font-size: clamp(16px, 1.8vw, 18px);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Grid de destaques */
+.destaques__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 28px;
+  margin-bottom: 50px;
+}
+
+.destaque-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #1c1816;
+  border: 1px solid rgba(244, 233, 212, 0.12);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.destaque-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(237, 181, 43, 0.4);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+}
+
+.destaque-card__corpo {
+  margin-bottom: 20px;
+}
+
+.destaque-card__nome {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: #fffaf2;
+  margin: 0 0 10px;
+}
+
+.destaque-card__descricao {
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(244, 233, 212, 0.72);
+  margin: 0;
+}
+
+.destaque-card__rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(244, 233, 212, 0.08);
+}
+
+.destaque-card__preco {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: #edb52b;
+}
+
+.destaque-card__btn {
+  min-height: 42px;
+  padding: 8px 18px;
+  font-size: 14px;
+}
+
+.destaques .empty-state {
+  text-align: center;
+  color: rgba(244, 233, 212, 0.78);
+}
+
+/* Botão proeminente para o cardápio */
+.destaques__acao {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.button-cardapio-completo {
+  min-height: 56px;
+  padding: 14px 34px;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 8px 24px rgba(201, 52, 34, 0.35);
+}
+
+/* Transições escalonadas para .js-reveal na página inicial */
+.pagina-inicio .js-reveal {
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+
+/* --------------------------------------------------------------------------
+   Acessibilidade e Redução de Movimento
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .pagina-inicio .js-reveal {
+    transition-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .video-hero__hint-icon {
+    animation: none !important;
+  }
+
+  .video-hero__video {
+    transition: none !important;
+  }
+}

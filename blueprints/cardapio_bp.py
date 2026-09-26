@@ -8,6 +8,13 @@ cardapio_bp = Blueprint('cardapio', __name__)
 
 
 @cardapio_bp.route('/')
+def pagina_inicial():
+    """Página inicial com vídeo hero e destaques do cardápio."""
+    destaques = ProdutoDAO.listar_cardapio()[:3]
+    return render_template('cardapio/inicio.html', destaques=destaques)
+
+
+@cardapio_bp.route('/cardapio')
 def pagina_cardapio():
     """RF05/RF06: cardápio público com categorias e produtos disponíveis."""
     categorias = CategoriaDAO.listar()

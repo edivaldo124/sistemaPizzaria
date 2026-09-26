@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block titulo %}Início | Mandacaru — pizzaria de quintal{% endblock %}
+{% block pagina_js %}inicio{% endblock %}
+{% block corpo_classe %}pagina-inicio{% endblock %}
+
+{% block head %}
+    <link rel="preload" href="{{ url_for('static', filename='fonts/alfa-slab-one-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/inicio.css') }}">
+{% endblock %}
+
+{% block conteudo %}
+    <section class="video-hero" data-video-hero data-scrub-distance="2400" data-unlock-threshold="220">
+        <video
+            class="video-hero__video"
+            src="{{ url_for('static', filename='videos/forno.mp4') }}"
+            poster="{{ url_for('static', filename='videos/forno-poster.jpg') }}"
+            muted
+            playsinline
+            preload="auto"
+            aria-hidden="true"
+        ></video>
+
+        <div class="video-hero__overlay" aria-hidden="true"></div>
+
+        <a
+            href="{{ url_for('cardapio.pagina_cardapio') }}"
+            class="video-hero__skip"
+            data-hero-skip
+            aria-label="Pular introdução e ver o cardápio"
+        >Ver cardápio</a>
+
+        <div class="video-hero__content">
+            <h1 class="video-hero__title" data-hero-title>CARDÁPIO</h1>
+            <p class="video-hero__tagline" data-hero-tagline>Direto do forno a lenha</p>
+        </div>
+
+        <div class="video-hero__hint" data-hero-hint aria-hidden="true">
+            <span class="video-hero__hint-text">ROLE</span>
+            <svg class="video-hero__hint-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 10l5 5 5-5" />
+            </svg>
+        </div>
+
+        <div class="video-hero__progress" aria-hidden="true">
+            <div class="video-hero__progress-bar" data-hero-progress></div>
+        </div>
+    </section>
+
+    <section class="destaques" id="destaques">
+        <div class="destaques__container">
+            <div class="destaques__header js-reveal" style="--i: 0;">
+                <p class="eyebrow">Destaques da casa</p>
+                <h2 class="destaques__titulo">Nossos queridinhos</h2>
+                <p class="destaques__subtitulo">Massas artesanais de longa fermentação, ingredientes frescos e assadas no calor da lenha.</p>
+            </div>
+
+            {% if destaques %}
+            <div class="destaques__grid">
+                {% for produto in destaques %}
+                <article class="destaque-card js-reveal" style="--i: {{ loop.index }};">
+                    <div class="destaque-card__corpo">
+                        <h3 class="destaque-card__nome">{{ produto.nome }}</h3>
+                        {% if produto.descricao %}
+                        <p class="destaque-card__descricao">{{ produto.descricao }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="destaque-card__rodape">
+                        <span class="destaque-card__preco">{{ produto.preco | moeda }}</span>
+                        <a class="button button-accent destaque-card__btn" href="{{ url_for('cardapio.pagina_cardapio') }}">Pedir</a>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-state js-reveal" style="--i: 1;">Explore todas as opções disponíveis em nosso cardápio completo.</p>
+            {% endif %}
+
+            <div class="destaques__acao js-reveal" style="--i: {{ (destaques|length) + 1 }};">
+                <a class="button button-accent button-cardapio-completo" href="{{ url_for('cardapio.pagina_cardapio') }}">
+                    Ver cardápio completo
+                </a>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/inicio.js') }}"></script>
+{% endblock %}

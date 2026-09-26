@@ -16,7 +16,7 @@ def test_api_register_cria_sessao_e_retorna_redirect(client):
     )
 
     assert resposta.status_code == 201
-    assert resposta.get_json()['redirect'] == '/'
+    assert resposta.get_json()['redirect'] == '/cardapio'
     assert resposta.get_json()['usuario']['email'] == 'api@example.com'
 
 
