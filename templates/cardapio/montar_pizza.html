@@ -1,21 +1,52 @@
 {% extends "base.html" %}
 {% block titulo %}Montar pizza{% endblock %}
+{% block corpo_classe %}pagina-montar{% endblock %}
 {% block pagina_js %}pizza{% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/pizza.js') }}"></script>{% endblock %}
+{% block head %}<link rel="modulepreload" href="{{ url_for('static', filename='js/pizza3d.js') }}">{% endblock %}
+{% block scripts %}<script type="module" src="{{ url_for('static', filename='js/pizza.js') }}" data-cena="{{ url_for('static', filename='js/pizza3d.js') }}"></script>{% endblock %}
 {% block conteudo %}
-    <div class="builder-header"><a class="back-link" href="{{ url_for('cardapio.pagina_cardapio') }}" aria-label="Voltar ao cardápio">←</a><div><p class="eyebrow">Uma pizza só sua</p><h1>Monte sua pizza</h1></div></div>
-    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+<div class="builder" data-regra-preco="{{ regra_preco }}">
+    <section class="builder-stage" aria-labelledby="builder-titulo">
+        <div class="builder-header">
+            <a class="back-link" href="{{ url_for('cardapio.pagina_cardapio') }}" aria-label="Voltar ao cardápio">←</a>
+            <div><p class="eyebrow">Uma pizza só sua</p><h1 id="builder-titulo">Monte sua pizza</h1></div>
+        </div>
+
+        <div class="stage" data-pizza-stage>
+            <canvas class="stage-canvas" data-pizza-canvas aria-hidden="true"></canvas>
+            <svg class="stage-fallback" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+                <g class="fallback-sol">
+                    {% for i in range(16) %}<path d="M100 6 L106 26 L94 26 Z" transform="rotate({{ i * 22.5 }} 100 100)"/>{% endfor %}
+                </g>
+                <circle cx="100" cy="100" r="70" class="fallback-borda"/>
+                <circle cx="100" cy="100" r="58" class="fallback-queijo"/>
+                <circle cx="80" cy="78" r="7" class="fallback-cobertura"/><circle cx="122" cy="84" r="7" class="fallback-cobertura"/>
+                <circle cx="112" cy="122" r="7" class="fallback-cobertura"/><circle cx="78" cy="118" r="7" class="fallback-cobertura"/>
+                <circle cx="100" cy="100" r="5" class="fallback-cobertura"/>
+            </svg>
+            <p class="stage-dica" data-pizza-dica>Arraste para girar</p>
+        </div>
+
+        <ul class="stage-resumo" data-pizza-resumo aria-live="polite">
+            <li data-vazio>Escolha um tamanho para começar</li>
+        </ul>
+    </section>
 
     <form class="pizza-builder" method="post" action="{{ url_for('carrinho.adicionar_pizza') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
 
         <fieldset class="choice-group">
-            <legend>Tamanho</legend>
+            <legend><span class="step-num" aria-hidden="true">01</span> Tamanho</legend>
             <div class="choice-grid">
                 {% for tamanho in tamanhos %}
                 <label class="choice-card" for="tamanho-{{ tamanho.id }}">
-                    <input type="radio" id="tamanho-{{ tamanho.id }}" name="tamanho_id" value="{{ tamanho.id }}" required>
-                    <strong>{{ tamanho.nome }}</strong><small>até {{ tamanho.max_sabores }} sabor(es)</small>
+                    <input type="radio" id="tamanho-{{ tamanho.id }}" name="tamanho_id" value="{{ tamanho.id }}"
+                           data-max="{{ tamanho.max_sabores }}" data-fatias="{{ tamanho.numero_fatias or 8 }}"
+                           data-indice="{{ loop.index0 }}" data-total="{{ loop.length }}" data-nome="{{ tamanho.nome }}" required>
+                    <span class="choice-icone" aria-hidden="true" style="--escala: {{ 0.55 + 0.45 * (loop.index / loop.length) }}"></span>
+                    <strong>{{ tamanho.nome }}</strong>
+                    <small>{% if tamanho.numero_fatias %}{{ tamanho.numero_fatias }} fatias · {% endif %}até {{ tamanho.max_sabores }} sabor{% if tamanho.max_sabores > 1 %}es{% endif %}</small>
                 </label>
                 {% else %}
                 <p>Nenhum tamanho disponível.</p>
@@ -24,12 +55,15 @@
         </fieldset>
 
         <fieldset class="choice-group">
-            <legend>Sabores <small>respeite o máximo do tamanho escolhido</small></legend>
+            <legend><span class="step-num" aria-hidden="true">02</span> Sabores <small data-limite-sabores>escolha o tamanho primeiro</small></legend>
             <div class="choice-list">
                 {% for sabor in sabores %}
                 <label class="check-row" for="sabor-{{ sabor.id }}">
-                    <input type="checkbox" id="sabor-{{ sabor.id }}" name="sabores_ids" value="{{ sabor.id }}">
+                    <input type="checkbox" id="sabor-{{ sabor.id }}" name="sabores_ids" value="{{ sabor.id }}" data-nome="{{ sabor.nome }}"
+                           data-precos="{% for p in sabor.precos %}{{ p.tamanho_id }}:{{ p.preco }}{% if not loop.last %},{% endif %}{% endfor %}">
+                    <span class="check-cor" aria-hidden="true"></span>
                     <span><strong>{{ sabor.nome }}</strong>{% if sabor.descricao %}<small>{{ sabor.descricao }}</small>{% endif %}</span>
+                    <em class="check-preco" data-preco-sabor></em>
                 </label>
                 {% else %}
                 <p>Nenhum sabor disponível.</p>
@@ -38,51 +72,66 @@
         </fieldset>
 
         <fieldset class="choice-group">
-            <legend>Massa</legend>
+            <legend><span class="step-num" aria-hidden="true">03</span> Massa</legend>
             <div class="choice-grid choice-grid-small">
-                <label class="choice-card" for="massa-padrao"><input type="radio" id="massa-padrao" name="massa_id" value=""> <strong>Padrão</strong></label>
+                <label class="choice-card" for="massa-padrao"><input type="radio" id="massa-padrao" name="massa_id" value="" data-preco="0" checked> <strong>Padrão</strong></label>
                 {% for massa in massas %}
                 <label class="choice-card" for="massa-{{ massa.id }}">
-                    <input type="radio" id="massa-{{ massa.id }}" name="massa_id" value="{{ massa.id }}">
+                    <input type="radio" id="massa-{{ massa.id }}" name="massa_id" value="{{ massa.id }}" data-nome="{{ massa.nome }}" data-preco="{{ massa.preco_adicional or 0 }}">
                     <strong>{{ massa.nome }}</strong>{% if massa.preco_adicional %}<small>+{{ massa.preco_adicional | moeda }}</small>{% endif %}
                 </label>
-                {% else %}
-                <p>Nenhuma opção adicional de massa.</p>
                 {% endfor %}
             </div>
         </fieldset>
 
         <fieldset class="choice-group">
-            <legend>Borda</legend>
+            <legend><span class="step-num" aria-hidden="true">04</span> Borda</legend>
             <div class="choice-grid choice-grid-small">
-                <label class="choice-card" for="borda-nenhuma"><input type="radio" id="borda-nenhuma" name="borda_id" value=""> <strong>Sem borda</strong></label>
+                <label class="choice-card" for="borda-nenhuma"><input type="radio" id="borda-nenhuma" name="borda_id" value="" data-preco="0" checked> <strong>Sem borda</strong></label>
                 {% for borda in bordas %}
                 <label class="choice-card" for="borda-{{ borda.id }}">
-                    <input type="radio" id="borda-{{ borda.id }}" name="borda_id" value="{{ borda.id }}">
+                    <input type="radio" id="borda-{{ borda.id }}" name="borda_id" value="{{ borda.id }}" data-nome="{{ borda.nome }}" data-preco="{{ borda.preco_adicional or 0 }}">
                     <strong>{{ borda.nome }}</strong>{% if borda.preco_adicional %}<small>+{{ borda.preco_adicional | moeda }}</small>{% endif %}
                 </label>
-                {% else %}
-                <p>Nenhuma opção adicional de borda.</p>
                 {% endfor %}
             </div>
         </fieldset>
 
+        {% if adicionais %}
         <fieldset class="choice-group">
-            <legend>Adicionais</legend>
-            <div class="choice-list">
+            <legend><span class="step-num" aria-hidden="true">05</span> Adicionais</legend>
+            <div class="choice-list choice-list-chips">
                 {% for adicional in adicionais %}
-                <label class="check-row" for="adicional-{{ adicional.id }}">
-                    <input type="checkbox" id="adicional-{{ adicional.id }}" name="adicionais_ids" value="{{ adicional.id }}">
+                <label class="check-row check-chip" for="adicional-{{ adicional.id }}">
+                    <input type="checkbox" id="adicional-{{ adicional.id }}" name="adicionais_ids" value="{{ adicional.id }}" data-nome="{{ adicional.nome }}" data-preco="{{ adicional.preco or 0 }}">
                     <span><strong>{{ adicional.nome }}</strong>{% if adicional.preco %}<small>+{{ adicional.preco | moeda }}</small>{% endif %}</span>
                 </label>
-                {% else %}
-                <p>Nenhum adicional disponível.</p>
                 {% endfor %}
             </div>
         </fieldset>
+        {% endif %}
 
-        <div class="form-row"><label for="quantidade">Quantidade<input type="number" id="quantidade" name="quantidade" value="1" min="1"></label><label class="grow" for="observacoes">Observações<textarea id="observacoes" name="observacoes" placeholder="Ex.: sem cebola, bem assada"></textarea></label></div>
+        <fieldset class="choice-group">
+            <legend><span class="step-num" aria-hidden="true">{{ '06' if adicionais else '05' }}</span> Detalhes</legend>
+            <div class="form-row">
+                <label for="quantidade">Quantidade
+                    <span class="stepper">
+                        <button type="button" class="stepper-btn" data-passo="-1" aria-label="Diminuir quantidade">−</button>
+                        <input type="number" id="quantidade" name="quantidade" value="1" min="1" max="20" inputmode="numeric">
+                        <button type="button" class="stepper-btn" data-passo="1" aria-label="Aumentar quantidade">+</button>
+                    </span>
+                </label>
+                <label class="grow" for="observacoes">Observações<textarea id="observacoes" name="observacoes" placeholder="Ex.: sem cebola, bem assada"></textarea></label>
+            </div>
+        </fieldset>
 
-        <button class="button button-accent submit-button" type="submit">Adicionar à sacola</button>
+        <div class="builder-bar">
+            <div class="builder-total">
+                <small>Total estimado</small>
+                <strong data-pizza-total>—</strong>
+            </div>
+            <button class="button button-accent submit-button" type="submit">Botar na sacola</button>
+        </div>
     </form>
+</div>
 {% endblock %}
