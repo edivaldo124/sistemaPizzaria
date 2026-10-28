@@ -1,13 +1,15 @@
+from decimal import Decimal, InvalidOperation
+
 from flask import Blueprint, abort, current_app, flash, redirect, request, url_for
 
 from config import csrf, db
 from dao.pedido_dao import PedidoDAO
-from modelos.pagamento import STATUS_APROVADO, STATUS_PENDENTE, STATUS_RECUSADO
+from modelos.pagamento import STATUS_APROVADO, STATUS_ESTORNADO, STATUS_PENDENTE, STATUS_RECUSADO
 from modelos.usuario import TIPO_ADMIN, TIPO_ATENDENTE, TIPO_GERENTE
 from servicos.autorizacao import papel_requerido
 from servicos.erros import ErroRegraNegocio
 from servicos.pagamentos import aprovar_pagamento, recusar_pagamento
-from servicos.integracoes import consultar_pagamento_mercado_pago
+from servicos.integracoes import consultar_pagamento_mercado_pago, moeda_pagamento
 
 pagamento_bp = Blueprint('pagamento', __name__, url_prefix='/pagamentos')
 
@@ -20,7 +22,8 @@ def webhook_mercado_pago():
     """Confirma o pagamento consultando o Mercado Pago, nunca pelo payload recebido."""
     dados = request.get_json(silent=True) or {}
     pagamento_id = dados.get('data', {}).get('id') or request.args.get('data.id')
-    if not pagamento_id:
+    # O id vai para a URL da API do Mercado Pago junto com o token: só aceita números.
+    if not pagamento_id or not str(pagamento_id).isdigit():
         return {'status': 'ignored'}, 200
     try:
         resposta = consultar_pagamento_mercado_pago(str(pagamento_id))
@@ -36,13 +39,27 @@ def webhook_mercado_pago():
     status = resposta.get('status')
     pagamento = pedido.pagamento_atual
     if status == 'approved':
-        pagamento.status = STATUS_APROVADO
-    elif status in ('rejected', 'cancelled', 'refunded'):
-        pagamento.status = STATUS_RECUSADO
+        # Só confirma se o valor pago cobre o pedido (RN10).
+        try:
+            valor_pago = Decimal(str(resposta.get('transaction_amount')))
+        except (InvalidOperation, ValueError):
+            valor_pago = Decimal('0')
+        if valor_pago < pagamento.valor or resposta.get('currency_id') != moeda_pagamento():
+            current_app.logger.warning('Pagamento %s com valor divergente do pedido %s', pagamento_id, numero)
+            return {'status': 'ignored'}, 200
+        novo_status = STATUS_APROVADO
+    elif status in ('refunded', 'charged_back'):
+        novo_status = STATUS_ESTORNADO
+    elif status in ('rejected', 'cancelled'):
+        novo_status = STATUS_RECUSADO
     elif status in ('pending', 'in_process', 'in_mediation'):
-        pagamento.status = STATUS_PENDENTE
+        novo_status = STATUS_PENDENTE
     else:
         return {'status': 'ignored'}, 200
+    # Notificações chegam fora de ordem: um "pendente" atrasado não desfaz uma aprovação.
+    if pagamento.status in (STATUS_APROVADO, STATUS_ESTORNADO) and novo_status in (STATUS_PENDENTE, STATUS_RECUSADO):
+        return {'status': 'ignored'}, 200
+    pagamento.status = novo_status
     pagamento.referencia_externa = str(pagamento_id)[:120]
     db.session.commit()
     return {'status': 'ok'}, 200

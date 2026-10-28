@@ -37,3 +37,14 @@ def test_enviar_email_gmail_usa_token_oauth_refresh(monkeypatch):
 
     assert resposta == {'id': 'abc123'}
     assert captured['auth'] == 'Bearer token-azure'
+
+
+def test_enderecos_publicos_tem_padrao_sem_variavel_de_ambiente(monkeypatch):
+    monkeypatch.delenv('GOOGLE_MAPS_WEB_URL', raising=False)
+    monkeypatch.delenv('GMAIL_API_URL', raising=False)
+
+    class Endereco:
+        logradouro, numero, bairro, cidade, uf, cep = 'Rua A', '10', 'Centro', 'Palmas', 'TO', ''
+
+    assert integracoes.url_google_maps(Endereco()).startswith('https://www.google.com/maps/dir/?api=1')
+    assert integracoes._config('GMAIL_API_URL') == 'https://gmail.googleapis.com/gmail/v1'
