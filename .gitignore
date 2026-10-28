@@ -10,3 +10,7 @@ uploads/*
 !uploads/produtos/
 .pytest_cache/
 graphify-out/
+
+# Understand Anything (arquivos locais; o resto de .ua/ deve ser commitado)
+.ua/intermediate/
+.ua/diff-overlay.json
