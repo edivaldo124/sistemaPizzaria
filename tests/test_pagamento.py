@@ -75,3 +75,36 @@ def test_rota_aprovar_pagamento_exige_papel_de_caixa(client, db):
     # Cliente autenticado (não é atendente/gerente/admin) não pode aprovar pagamento.
     resposta = client.post(f'/pagamentos/{pedido.id}/aprovar', follow_redirects=False)
     assert resposta.status_code == 403
+
+
+def _webhook(client, monkeypatch, resposta):
+    import blueprints.pagamento_bp as pagamento_bp
+    monkeypatch.setattr(pagamento_bp, 'consultar_pagamento_mercado_pago', lambda _id: resposta)
+    return client.post('/pagamentos/mercadopago/webhook', json={'data': {'id': '123'}})
+
+
+def test_webhook_aprova_somente_com_valor_integral(client, db, monkeypatch):
+    pedido = _criar_pedido_delivery(db, client)
+    base = {'external_reference': pedido.numero, 'status': 'approved', 'currency_id': 'BRL'}
+
+    _webhook(client, monkeypatch, {**base, 'transaction_amount': 1.0})
+    assert pedido.pagamento_atual.status == STATUS_PENDENTE
+
+    _webhook(client, monkeypatch, {**base, 'transaction_amount': float(pedido.total)})
+    assert pedido.pagamento_atual.status == STATUS_APROVADO
+
+
+def test_webhook_pendente_atrasado_nao_desfaz_aprovacao(client, db, monkeypatch):
+    pedido = _criar_pedido_delivery(db, client)
+    aprovar_pagamento(pedido)
+
+    _webhook(client, monkeypatch, {'external_reference': pedido.numero, 'status': 'pending'})
+    assert pedido.pagamento_atual.status == STATUS_APROVADO
+
+
+def test_webhook_ignora_id_nao_numerico(client, db, monkeypatch):
+    chamado = []
+    import blueprints.pagamento_bp as pagamento_bp
+    monkeypatch.setattr(pagamento_bp, 'consultar_pagamento_mercado_pago', lambda _id: chamado.append(_id) or {})
+    r = client.post('/pagamentos/mercadopago/webhook', json={'data': {'id': '../users/me'}})
+    assert r.status_code == 200 and chamado == []
