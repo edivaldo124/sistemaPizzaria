@@ -3,6 +3,7 @@ from flask import Blueprint, render_template
 from dao.catalogo_dao import (
     AdicionalDAO, BordaDAO, CategoriaDAO, MassaDAO, ProdutoDAO, SaborDAO, TamanhoDAO,
 )
+from modelos.configuracao import ConfiguracaoLoja
 
 cardapio_bp = Blueprint('cardapio', __name__)
 
@@ -32,4 +33,6 @@ def montar_pizza():
         massas=MassaDAO.listar(),
         bordas=BordaDAO.listar(),
         adicionais=AdicionalDAO.listar(),
+        # Só para a prévia de preço no navegador; o valor gravado sai de servicos/precos.py.
+        regra_preco=ConfiguracaoLoja.obter().regra_preco_multiplos_sabores,
     )
