@@ -1,25 +1,27 @@
 {% extends "base.html" %}
-{% block titulo %}Meus pedidos{% endblock %}
+{% import "componentes/ui.html" as ui with context %}
+{% block titulo %}Meus pedidos | Brasa do Cerrado{% endblock %}
 {% block conteudo %}
-    <h1>Meus pedidos</h1>
-    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
-    <table>
-        <thead><tr><th>Número</th><th>Data</th><th>Status</th><th>Total</th><th></th></tr></thead>
-        <tbody>
-            {% for pedido in pedidos %}
-            <tr>
-                <td>{{ pedido.numero }}</td>
-                <td>{{ pedido.criado_em }}</td>
-                <td>{{ pedido.status | status_pedido }}</td>
-                <td>{{ pedido.total | moeda if pedido.total is not none else '-' }}</td>
-                <td><a href="{{ url_for('pedido.acompanhar', numero=pedido.numero) }}">Ver</a></td>
-            </tr>
-            {% else %}
-            <tr><td colspan="5">Você ainda não fez nenhum pedido.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {{ ui.cabecalho('Meus pedidos', 'Acompanhe o pedido em andamento ou consulte os anteriores.', voltar=url_for('auth.minha_conta'), rotulo_voltar='Voltar para minha conta') }}
+    {{ ui.erro(erro) }}
 
-    <p><a href="{{ url_for('auth.minha_conta') }}">Voltar para Minha Conta</a></p>
-    <p><a href="{{ url_for('cardapio.pagina_cardapio') }}">Voltar ao cardápio</a></p>
+    {% if pedidos %}
+    <ul class="pedidos-lista">
+        {% for pedido in pedidos %}
+        <li>
+            <a class="pedido-linha" href="{{ url_for('pedido.acompanhar', numero=pedido.numero) }}">
+                <div class="pedido-linha__principal">
+                    <strong class="pedido-linha__numero num">Pedido #{{ pedido.numero }}</strong>
+                    <span class="pedido-linha__data">{{ pedido.tipo | tipo_pedido }} · {{ pedido.criado_em | data_hora }}</span>
+                </div>
+                <span class="pedido-linha__status">{{ ui.selo_status(pedido.status) }}</span>
+                <span class="preco">{{ pedido.total | moeda if pedido.total is not none else '-' }}</span>
+                <span class="pedido-linha__ver">Ver pedido</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+        {{ ui.vazio('Você ainda não fez nenhum pedido', 'Quando fizer, ele aparece aqui para você acompanhar do forno até a porta.', url_for('cardapio.pagina_cardapio'), 'Ver cardápio') }}
+    {% endif %}
 {% endblock %}

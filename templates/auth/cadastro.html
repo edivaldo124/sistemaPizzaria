@@ -1,36 +1,24 @@
 {% extends "base.html" %}
-{% block titulo %}Criar conta{% endblock %}
+{% import "componentes/ui.html" as ui with context %}
+{% from "auth/_moldura.html" import moldura %}
+{% block titulo %}Criar conta | Brasa do Cerrado{% endblock %}
 {% block pagina_js %}auth{% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='js/auth.js') }}"></script>{% endblock %}
 {% block conteudo %}
-    <section class="auth-page">
-        <div class="auth-card">
-            <div class="auth-intro">
-                <p class="eyebrow">Sua conta</p>
-                <h1>Criar conta</h1>
+    {% call moldura('Puxe uma cadeira', 'Com sua conta você salva endereços de entrega, fecha pedidos mais rápido e acompanha a pizza do forno até a porta.', 'Fermentação lenta e lenha') %}
+        <h1>Criar conta</h1>
+        {{ ui.erro(erro) }}
+        <form class="formulario formulario--duas auth-form" method="post">
+            {{ ui.csrf() }}
+            {{ ui.campo('nome', 'Nome', valor=nome or '', obrigatorio=True, classe='campo--largo', attrs={'autocomplete': 'name'}) }}
+            {{ ui.campo('email', 'E-mail', tipo='email', valor=email or '', obrigatorio=True, attrs={'autocomplete': 'email'}) }}
+            {{ ui.campo('telefone', 'Telefone', tipo='tel', valor=telefone or '', attrs={'autocomplete': 'tel', 'placeholder': '(63) 9 0000-0000'}) }}
+            {{ ui.campo('senha', 'Senha', tipo='password', obrigatorio=True, ajuda='Mínimo de 8 caracteres.', attrs={'minlength': 8, 'autocomplete': 'new-password'}) }}
+            {{ ui.campo('confirmacao_senha', 'Repita a senha', tipo='password', obrigatorio=True, attrs={'minlength': 8, 'autocomplete': 'new-password'}) }}
+            <div class="formulario__acoes">
+                <button class="botao botao--brasa botao--largo" type="submit">Criar conta</button>
             </div>
-            {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
-            <form class="auth-form" method="post">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <label for="nome">Nome
-                    <input type="text" id="nome" name="nome" value="{{ nome or '' }}" required>
-                </label>
-                <label for="email">E-mail
-                    <input type="email" id="email" name="email" value="{{ email or '' }}" required>
-                </label>
-                <label for="telefone">Telefone
-                    <input type="tel" id="telefone" name="telefone" value="{{ telefone or '' }}">
-                </label>
-                <label for="senha">Senha
-                    <input type="password" id="senha" name="senha" required minlength="8">
-                </label>
-                <label for="confirmacao_senha">Confirmar senha
-                    <input type="password" id="confirmacao_senha" name="confirmacao_senha" required minlength="8">
-                </label>
-                <button class="button button-accent" type="submit">Criar conta</button>
-            </form>
-            <p class="auth-meta">Já tem conta? <a href="{{ url_for('auth.pagina_login') }}">Entrar</a></p>
-            <p class="site-link"><a href="{{ url_for('cardapio.pagina_cardapio') }}">Voltar ao cardápio</a></p>
-        </div>
-    </section>
+        </form>
+        <p class="acesso__rodape">Já tem conta? <a class="link" href="{{ url_for('auth.pagina_login') }}">Entrar</a></p>
+    {% endcall %}
 {% endblock %}

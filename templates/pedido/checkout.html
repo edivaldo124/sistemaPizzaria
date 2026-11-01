@@ -1,94 +1,93 @@
 {% extends "base.html" %}
-{% block titulo %}Finalizar pedido{% endblock %}
+{% import "componentes/ui.html" as ui with context %}
+{% block titulo %}Fechar pedido | Brasa do Cerrado{% endblock %}
 {% block pagina_js %}checkout{% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='js/checkout.js') }}"></script>{% endblock %}
 {% block conteudo %}
-    <div class="content-header">
-        <p class="eyebrow">Último passo</p>
-        <h1>Finalizar pedido</h1>
-    </div>
-    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+    {{ ui.cabecalho('Fechar pedido', voltar=url_for('carrinho.ver_carrinho'), rotulo_voltar='Voltar à sacola') }}
+    {{ ui.erro(erro) }}
 
-    <div class="checkout-grid">
-        <form class="checkout-form panel-card" method="post">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <form class="fechamento" method="post">
+        {{ ui.csrf() }}
 
-            <fieldset class="checkout-fieldset">
-                <legend>Tipo de pedido</legend>
-                <div class="choice-grid choice-grid-small">
-                    <label class="choice-card" for="tipo_delivery">
-                        <input type="radio" id="tipo_delivery" name="tipo" value="delivery" required>
-                        <span>Delivery</span>
+        <div class="fechamento__etapas">
+            <fieldset class="grupo cartao">
+                <legend>Como você quer receber?</legend>
+                <div class="opcoes opcoes--lista-duas">
+                    <label class="opcao" for="tipo_delivery">
+                        <input type="radio" id="tipo_delivery" name="tipo" value="delivery" required{% if enderecos %} checked{% endif %}>
+                        <strong>Entrega</strong><small>Levamos até o seu endereço</small>
                     </label>
-                    <label class="choice-card" for="tipo_retirada">
-                        <input type="radio" id="tipo_retirada" name="tipo" value="retirada" required>
-                        <span>Retirada</span>
+                    <label class="opcao" for="tipo_retirada">
+                        <input type="radio" id="tipo_retirada" name="tipo" value="retirada" required{% if not enderecos %} checked{% endif %}>
+                        <strong>Retirada no balcão</strong><small>Sem taxa de entrega</small>
                     </label>
                 </div>
             </fieldset>
 
-            <fieldset class="checkout-fieldset">
-                <legend>Endereço</legend>
-                <div class="field-stack">
+            <fieldset class="grupo cartao" data-grupo-endereco>
+                <legend>Endereço de entrega <small>Usado quando o pedido é para entrega.</small></legend>
+                {% if enderecos %}
+                <div class="opcoes opcoes--lista">
                     {% for endereco in enderecos %}
-                    <label class="choice-card" for="endereco_{{ endereco.id }}">
-                        <input type="radio" id="endereco_{{ endereco.id }}" name="endereco_id" value="{{ endereco.id }}">
-                        <span>{{ endereco.logradouro }}, {{ endereco.numero }}{% if endereco.complemento %} - {{ endereco.complemento }}{% endif %} - {{ endereco.bairro }}</span>
+                    <label class="opcao opcao--linha" for="endereco_{{ endereco.id }}">
+                        <input type="radio" id="endereco_{{ endereco.id }}" name="endereco_id" value="{{ endereco.id }}"{% if loop.first %} checked{% endif %}>
+                        <span>
+                            <strong>{{ endereco.apelido or (endereco.logradouro ~ ', ' ~ endereco.numero) }}</strong>
+                            <small>{{ endereco.logradouro }}, {{ endereco.numero }}{% if endereco.complemento %} - {{ endereco.complemento }}{% endif %} · {{ endereco.bairro }}{% if endereco.regiao_entrega %} ({{ endereco.regiao_entrega.nome }} · {{ endereco.regiao_entrega.taxa_entrega | moeda }}){% endif %}</small>
+                        </span>
                     </label>
-                    {% else %}
-                    <p>Nenhum endereço cadastrado. <a href="{{ url_for('endereco.listar') }}">Cadastrar endereço</a></p>
                     {% endfor %}
                 </div>
+                <p class="fechamento__nota"><a class="link" href="{{ url_for('endereco.listar') }}">Cadastrar outro endereço</a></p>
+                {% else %}
+                {{ ui.vazio('Nenhum endereço cadastrado', 'Para receber em casa, cadastre um endereço antes de fechar o pedido. Se preferir retirar no balcão, pode seguir sem ele.', url_for('endereco.listar'), 'Cadastrar endereço') }}
+                {% endif %}
             </fieldset>
 
-            <fieldset class="checkout-fieldset">
-                <legend>Pagamento</legend>
-                <div class="choice-grid choice-grid-small">
-                    <label class="choice-card" for="pagamento_dinheiro">
-                        <input type="radio" id="pagamento_dinheiro" name="forma_pagamento" value="dinheiro" required>
-                        <span>Dinheiro</span>
+            <fieldset class="grupo cartao">
+                <legend>Forma de pagamento</legend>
+                <div class="opcoes">
+                    <label class="opcao" for="pagamento_pix">
+                        <input type="radio" id="pagamento_pix" name="forma_pagamento" value="pix" required checked>
+                        <strong>Pix</strong><small>Aprovação rápida</small>
                     </label>
-                    <label class="choice-card" for="pagamento_pix">
-                        <input type="radio" id="pagamento_pix" name="forma_pagamento" value="pix" required>
-                        <span>Pix</span>
-                    </label>
-                    <label class="choice-card" for="pagamento_cartao">
+                    <label class="opcao" for="pagamento_cartao">
                         <input type="radio" id="pagamento_cartao" name="forma_pagamento" value="cartao" required>
-                        <span>Cartão</span>
+                        <strong>Cartão</strong><small>Na entrega ou no balcão</small>
                     </label>
-                    <label class="choice-card" for="pagamento_presencial">
+                    <label class="opcao" for="pagamento_dinheiro">
+                        <input type="radio" id="pagamento_dinheiro" name="forma_pagamento" value="dinheiro" required>
+                        <strong>Dinheiro</strong><small>Informe se precisar de troco</small>
+                    </label>
+                    <label class="opcao" for="pagamento_presencial">
                         <input type="radio" id="pagamento_presencial" name="forma_pagamento" value="presencial" required>
-                        <span>Balcão</span>
+                        <strong>No balcão</strong><small>Paga ao retirar</small>
                     </label>
                 </div>
-
-                <div class="cash-row">
-                    <label for="troco_para">Troco para</label>
-                    <input type="number" step="0.01" min="0" id="troco_para" name="troco_para" placeholder="opcional">
+                <div class="fechamento__troco" data-campo-troco hidden>
+                    {{ ui.campo('troco_para', 'Troco para quanto?', tipo='number', ajuda='Deixe em branco se não precisar de troco.', attrs={'step': '0.01', 'min': '0', 'inputmode': 'decimal', 'placeholder': 'R$'}) }}
                 </div>
             </fieldset>
 
-            <div class="field-stack">
-                <label for="cupom_codigo">Cupom de desconto</label>
-                <input type="text" id="cupom_codigo" name="cupom_codigo">
-
-                <label for="observacoes">Observações</label>
-                <textarea id="observacoes" name="observacoes"></textarea>
+            <div class="cartao formulario formulario--duas">
+                {{ ui.campo('cupom_codigo', 'Cupom de desconto', ajuda='Tem um código válido? Digite aqui.', attrs={'autocapitalize': 'characters', 'autocomplete': 'off', 'placeholder': 'Ex.: BRASA10'}) }}
+                {{ ui.area_texto('observacoes', 'Observação do pedido', placeholder='Ex.: interfone quebrado, bater palma', classe='campo--largo') }}
             </div>
+        </div>
 
-            <button class="button button-accent" type="submit">Confirmar pedido</button>
-        </form>
-
-        <aside class="summary-box">
-            <div>
-                <p class="eyebrow">Resumo</p>
-                <h2>Dados do pedido</h2>
-            </div>
-            <div class="summary-row"><span>Entrega</span><strong>Conferir no próximo passo</strong></div>
-            <div class="summary-row"><span>Pagamento</span><strong>Selecione</strong></div>
-            <div class="summary-actions">
-                <a class="button button-ghost" href="{{ url_for('carrinho.ver_carrinho') }}">Voltar ao carrinho</a>
-            </div>
+        <aside class="fechamento__resumo cartao cartao--carvao">
+            <h2>Resumo do pedido</h2>
+            {% if carrinho and carrinho.itens %}
+            <ul class="fechamento__itens">
+                {% for item in carrinho.itens %}
+                <li><span class="num">{{ item.quantidade }}×</span> {{ item.produto.nome if item.produto else ('Pizza ' ~ (item.tamanho.nome if item.tamanho else '')) }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {{ ui.dados([('Recebimento', 'Escolha ao lado'), ('Pagamento', 'Escolha ao lado')], 'fechamento__dados') }}
+            <p class="fechamento__nota-resumo">Taxa de entrega e desconto do cupom entram no cálculo final ao confirmar.</p>
+            <button class="botao botao--brasa botao--largo" type="submit">Confirmar pedido</button>
         </aside>
-    </div>
+    </form>
 {% endblock %}

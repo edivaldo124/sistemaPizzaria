@@ -11,17 +11,18 @@ def test_pagina_inicial_contem_video_hero_e_link_cardapio(client, db):
     assert resposta.status_code == 200
     conteudo = resposta.get_data(as_text=True)
 
-    # Hero com atributo data-video-hero
-    assert 'data-video-hero' in conteudo
+    # Hero com o vídeo que avança com a rolagem
+    assert 'data-hero' in conteudo
+    assert 'videos/forno.mp4' in conteudo
 
     # Link para o cardápio
     assert '/cardapio' in conteudo
-    assert 'Ver cardápio' in conteudo
+    assert 'Ver o cardápio' in conteudo
 
-    # Elementos do hero
-    assert 'Direto do forno a lenha' in conteudo
-    assert 'ROLE' in conteudo
-    assert 'data-hero-progress' in conteudo
+    # Manchetes por etapa e medidor de rolagem
+    assert conteudo.count('data-manchete') == 5
+    assert 'Lenha de' in conteudo
+    assert 'data-hero-num' in conteudo
 
 
 def test_pagina_inicial_exibe_destaques(client, db):
@@ -45,7 +46,7 @@ def test_pagina_inicial_exibe_destaques(client, db):
     assert resposta.status_code == 200
     conteudo = resposta.get_data(as_text=True)
 
-    assert 'Destaques da casa' in conteudo
+    assert 'Os que mais saem do forno' in conteudo
     assert 'Pizza Marguerita Especial' in conteudo
     assert 'Tomate confit e manjericão fresco' in conteudo
 
@@ -55,7 +56,7 @@ def test_pagina_cardapio_nao_contem_video_hero(client, db):
     assert resposta.status_code == 200
     conteudo = resposta.get_data(as_text=True)
 
-    assert 'data-video-hero' not in conteudo
+    assert 'data-hero' not in conteudo
     assert 'O cardápio de hoje' in conteudo
 
 
@@ -64,4 +65,4 @@ def test_carrinho_nao_contem_video_hero(client, db):
     assert resposta.status_code == 200
     conteudo = resposta.get_data(as_text=True)
 
-    assert 'data-video-hero' not in conteudo
+    assert 'data-hero' not in conteudo

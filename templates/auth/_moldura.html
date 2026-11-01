@@ -1,0 +1,16 @@
+{# Moldura compartilhada por login e cadastro: painel escuro de boas-vindas + formulário. #}
+{% import "componentes/ui.html" as ui %}
+
+{% macro moldura(titulo, apoio, assinatura=None) -%}
+<section class="acesso">
+    <div class="acesso__boas-vindas">
+        <p class="acesso__titulo">{{ titulo }}</p>
+        <p class="acesso__apoio">{{ apoio }}</p>
+        {% if assinatura %}<p class="acesso__assinatura">{{ assinatura }}</p>{% endif %}
+        {{ ui.pizza_vitrine('acesso__sol') }}
+    </div>
+    <div class="acesso__form">
+        {{ caller() }}
+    </div>
+</section>
+{%- endmacro %}

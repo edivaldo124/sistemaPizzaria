@@ -1,58 +1,88 @@
-{% extends "base.html" %}
-{% block titulo %}Pedido {{ pedido.numero }}{% endblock %}
+{% extends "painel_base.html" if usuario_logado and usuario_logado.tipo != 'cliente' else "base.html" %}
+{% import "componentes/ui.html" as ui with context %}
+{% block titulo %}Pedido #{{ pedido.numero }} | Brasa do Cerrado{% endblock %}
+
+{% set eh_entrega = pedido.tipo == 'delivery' %}
+{% set FRASES = {
+    'recebido': ('Pedido recebido', 'A cozinha já viu seu pedido e vai confirmar em instantes.'),
+    'confirmado': ('Pedido confirmado', 'Sua pizza está na fila do forno.'),
+    'em_preparo': ('Tá no forno!', 'A massa está assando na lenha. Daqui a pouco fica pronta.'),
+    'pronto': ('Pizza pronta!', 'Esperando o entregador sair com ela.' if eh_entrega else 'Pode vir buscar no balcão.'),
+    'saiu_para_entrega': ('Saiu pra entrega', 'O entregador está a caminho do seu endereço.'),
+    'entregue': ('Entregue', 'Bom apetite! Obrigado por pedir na Brasa do Cerrado.'),
+    'cancelado': ('Pedido cancelado', 'Este pedido foi cancelado e não será preparado.'),
+} %}
+{% set frase = FRASES.get(pedido.status, (pedido.status | status_pedido, '')) %}
+
 {% block conteudo %}
-    <h1>Pedido {{ pedido.numero }}</h1>
-    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+    {% set voltar = url_for('pedido.meus_pedidos') if usuario_logado and usuario_logado.tipo == 'cliente' else (url_for('admin.pedidos') if usuario_logado and usuario_logado.is_gerencia else None) %}
+    {% call ui.cabecalho('Pedido #' ~ pedido.numero, (pedido.tipo | tipo_pedido) ~ ' · feito em ' ~ (pedido.criado_em | data_hora), voltar=voltar) %}
+        {{ ui.selo_status(pedido.status) }}
+    {% endcall %}
+    {{ ui.erro(erro) }}
 
-    <p>Tipo: {{ pedido.tipo | tipo_pedido }}</p>
-    <p>Status: {{ pedido.status | status_pedido }}</p>
-    <p>Total: {{ pedido.total | moeda if pedido.total is not none else '-' }}</p>
-    {% if pedido.cliente and pedido.cliente.usuario %}
-    <p>Cliente: {{ pedido.cliente.usuario.nome }}</p>
-    {% endif %}
-    {% if pedido.endereco_entrega %}
-    <p>Endereço: {{ pedido.endereco_entrega.logradouro }}, {{ pedido.endereco_entrega.numero }}{% if pedido.endereco_entrega.complemento %} - {{ pedido.endereco_entrega.complemento }}{% endif %} - {{ pedido.endereco_entrega.bairro }}</p>
-    {% endif %}
-    {% if pedido.pagamento_atual %}
-    <p>Pagamento: {{ pedido.pagamento_atual.forma | forma_pagamento }} - {{ pedido.pagamento_atual.status }}</p>
-    {% endif %}
+    <div class="acompanhar">
+        <div class="acompanhar__principal">
+            <section class="acompanhar__status acompanhar__status--{{ pedido.status }}" aria-live="polite">
+                {{ ui.forno('acompanhar__forno', aceso=pedido.status not in ('entregue', 'cancelado')) }}
+                <h2>{{ frase[0] }}</h2>
+                <p>{{ frase[1] }}</p>
+            </section>
 
-    {% if usuario_logado and usuario_logado.tipo in ('atendente', 'gerente', 'admin') and pedido.pagamento_atual and pedido.pagamento_atual.status == 'pendente' %}
-    <form method="post" action="{{ url_for('pagamento.aprovar', pedido_id=pedido.id) }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit">Aprovar pagamento</button>
-    </form>
-    <form method="post" action="{{ url_for('pagamento.recusar', pedido_id=pedido.id) }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit">Recusar pagamento</button>
-    </form>
-    {% endif %}
+            {% if pedido.status != 'cancelado' %}
+            <section class="acompanhar__etapas" aria-label="Andamento do pedido">
+                {{ ui.linha_do_tempo(pedido) }}
+            </section>
+            {% endif %}
+        </div>
 
-    <h2>Itens</h2>
-    <ul>
-        {% for item in pedido.itens %}
-        <li>{{ item.quantidade }}x {{ item.descricao }} - {{ item.subtotal | moeda if item.subtotal is not none else '-' }}{% if item.observacoes %} (Obs: {{ item.observacoes }}){% endif %}</li>
-        {% else %}
-        <li>Nenhum item encontrado.</li>
-        {% endfor %}
-    </ul>
+        <div class="acompanhar__lado">
+            {% call ui.cartao('O que você pediu') %}
+                <ul class="comanda">
+                    {% for item in pedido.itens %}
+                    <li>
+                        <span><span class="num">{{ item.quantidade }}×</span> {{ item.descricao }}{% if item.observacoes %}<small>Obs.: {{ item.observacoes }}</small>{% endif %}</span>
+                        <span class="num">{{ item.subtotal | moeda if item.subtotal is not none else '-' }}</span>
+                    </li>
+                    {% else %}
+                    <li>Nenhum item encontrado.</li>
+                    {% endfor %}
+                </ul>
+                {% if pedido.taxa_entrega %}<p class="comanda__extra"><span>Taxa de entrega</span><span class="num">{{ pedido.taxa_entrega | moeda }}</span></p>{% endif %}
+                {% if pedido.desconto %}<p class="comanda__extra"><span>Desconto</span><span class="num">- {{ pedido.desconto | moeda }}</span></p>{% endif %}
+                <div class="comanda__total"><span>Total</span><span>{{ pedido.total | moeda if pedido.total is not none else '-' }}</span></div>
+            {% endcall %}
 
-    <h2>Histórico</h2>
-    <ul>
-        {% for evento in pedido.historico %}
-        <li>{{ evento.criado_em }} - {{ evento.status_novo | status_pedido }}{% if evento.observacao %} ({{ evento.observacao }}){% endif %}</li>
-        {% else %}
-        <li>Nenhum histórico registrado.</li>
-        {% endfor %}
-    </ul>
+            {% call ui.cartao('Entrega e pagamento', tom='palha') %}
+                {% set endereco = pedido.endereco_entrega %}
+                {{ ui.dados([
+                    ('Cliente', pedido.cliente.usuario.nome if pedido.cliente and pedido.cliente.usuario else None),
+                    ('Endereço', (endereco.logradouro ~ ', ' ~ endereco.numero ~ (' - ' ~ endereco.complemento if endereco.complemento else '') ~ ' · ' ~ endereco.bairro) if endereco else None),
+                    ('Pagamento', ((pedido.pagamento_atual.forma | forma_pagamento) ~ ' · ' ~ pedido.pagamento_atual.status) if pedido.pagamento_atual else None),
+                ]) }}
 
-    {% if pedido.pode_cliente_cancelar_diretamente() %}
-    <form method="post" action="{{ url_for('pedido.cancelar', numero=pedido.numero) }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit">Cancelar pedido</button>
-    </form>
-    {% endif %}
+                {% if usuario_logado and usuario_logado.tipo in ('atendente', 'gerente', 'admin') and pedido.pagamento_atual and pedido.pagamento_atual.status == 'pendente' %}
+                <div class="acoes-linha">
+                    {{ ui.botao_post(url_for('pagamento.aprovar', pedido_id=pedido.id), 'Aprovar pagamento', 'brasa') }}
+                    {{ ui.botao_post(url_for('pagamento.recusar', pedido_id=pedido.id), 'Recusar pagamento', 'contorno', confirmar='Recusar o pagamento deste pedido?') }}
+                </div>
+                {% endif %}
+            {% endcall %}
 
-    <p><a href="{{ url_for('pedido.meus_pedidos') }}">Voltar aos meus pedidos</a></p>
-    <p><a href="{{ url_for('cardapio.pagina_cardapio') }}">Voltar ao cardápio</a></p>
+            {% if pedido.historico %}
+            <details class="historico">
+                <summary>Histórico completo</summary>
+                <ul>
+                    {% for evento in pedido.historico %}
+                    <li><span class="num">{{ evento.criado_em | data_hora('%d/%m %H:%M') }}</span> {{ evento.status_novo | status_pedido }}{% if evento.observacao %} <small>{{ evento.observacao }}</small>{% endif %}</li>
+                    {% endfor %}
+                </ul>
+            </details>
+            {% endif %}
+
+            {% if pedido.pode_cliente_cancelar_diretamente() %}
+            {{ ui.botao_post(url_for('pedido.cancelar', numero=pedido.numero), 'Cancelar pedido', 'discreto', confirmar='Cancelar este pedido? A cozinha não vai prepará-lo.') }}
+            {% endif %}
+        </div>
+    </div>
 {% endblock %}
