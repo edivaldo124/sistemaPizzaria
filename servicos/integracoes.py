@@ -7,8 +7,25 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 
+# Endereços públicos e parâmetros fixos dos provedores. Só os segredos (tokens, chaves)
+# precisam vir do ambiente; estes valores podem ser sobrescritos, mas não são obrigatórios.
+PADROES = {
+    'INTEGRATION_HTTP_TIMEOUT': '10',
+    'MERCADOPAGO_API_URL': 'https://api.mercadopago.com',
+    'MERCADOPAGO_CHECKOUT_PATH': '/checkout/preferences',
+    'MERCADOPAGO_PAYMENT_PATH': '/v1/payments',
+    'PAYMENT_CURRENCY': 'BRL',
+    'GMAIL_API_URL': 'https://gmail.googleapis.com/gmail/v1',
+    'GMAIL_USER_ID': 'me',
+    'GOOGLE_MAPS_API_URL': 'https://maps.googleapis.com/maps/api/distancematrix/json',
+    'GOOGLE_MAPS_WEB_URL': 'https://www.google.com/maps/dir/',
+    'GOOGLE_MAPS_LANGUAGE': 'pt-BR',
+    'GOOGLE_MAPS_UNITS': 'metric',
+}
+
+
 def _config(nome):
-    valor = os.environ.get(nome, '').strip()
+    valor = os.environ.get(nome, '').strip() or PADROES.get(nome, '')
     if not valor:
         raise IntegracaoIndisponivel(f'{nome} não configurada.')
     return valor
@@ -40,6 +57,10 @@ def _json_request(url, *, method='GET', payload=None, headers=None):
         raise IntegracaoExternaError('O serviço externo retornou uma resposta inválida.') from erro
 
 
+def moeda_pagamento():
+    return _config('PAYMENT_CURRENCY')
+
+
 def mercado_pago_configurado():
     return bool(os.environ.get('MERCADOPAGO_ACCESS_TOKEN'))
 
@@ -57,7 +78,7 @@ def criar_preferencia_mercado_pago(pedido):
             'title': f'Pedido {pedido.numero}',
             'quantity': 1,
             'unit_price': float(pedido.total),
-            'currency_id': _config('PAYMENT_CURRENCY'),
+            'currency_id': moeda_pagamento(),
         }],
         'external_reference': pedido.numero,
         'notification_url': f'{base_url}/pagamentos/mercadopago/webhook',
