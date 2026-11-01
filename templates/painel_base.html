@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{# Layout das telas da equipe: barra lateral escura + área de trabalho. #}
+{% block corpo_classe %}painel{% endblock %}
+
+{% macro item_nav(endpoint, rotulo) -%}
+<a class="lateral__item" href="{{ url_for(endpoint) }}"{% if request.endpoint == endpoint %} aria-current="page"{% endif %}>{{ ui.losango() }}<span>{{ rotulo }}</span></a>
+{%- endmacro %}
+
+{% block casca %}
+<div class="painel__grade">
+    <aside class="lateral">
+        {{ ui.marca('painel da casa', url_for('admin.painel') if usuario_logado and usuario_logado.is_gerencia else None) }}
+        <nav class="lateral__nav" aria-label="Painel">
+            {% if usuario_logado and usuario_logado.is_gerencia %}
+                {{ item_nav('admin.painel', 'Resumo do dia') }}
+            {% endif %}
+            {% if usuario_logado and (usuario_logado.tipo == 'cozinha' or usuario_logado.is_gerencia) %}
+                {{ item_nav('cozinha.fila_pedidos', 'Cozinha') }}
+            {% endif %}
+            {% if usuario_logado and (usuario_logado.tipo == 'atendente' or usuario_logado.is_gerencia) %}
+                {{ item_nav('entrega.despacho', 'Despacho') }}
+            {% endif %}
+            {% if usuario_logado and usuario_logado.tipo == 'entregador' %}
+                {{ item_nav('entrega.minhas_entregas', 'Minhas entregas') }}
+            {% endif %}
+            {% if usuario_logado and usuario_logado.is_gerencia %}
+                {{ item_nav('admin.pedidos', 'Pedidos') }}
+                {{ item_nav('admin.produtos', 'Produtos') }}
+                {{ item_nav('admin.categorias', 'Categorias') }}
+                {{ item_nav('admin.regioes_entrega', 'Regiões de entrega') }}
+                {{ item_nav('admin.relatorios', 'Relatórios') }}
+            {% endif %}
+            {% if usuario_logado and usuario_logado.tipo == 'admin' %}
+                {{ item_nav('admin.funcionarios', 'Equipe') }}
+                {{ item_nav('admin.configuracao', 'Configuração') }}
+            {% endif %}
+        </nav>
+        <div class="lateral__rodape">
+            {% if usuario_logado %}
+            <a class="lateral__usuario" href="{{ url_for('auth.minha_conta') }}"{% if request.endpoint == 'auth.minha_conta' %} aria-current="page"{% endif %}>{{ usuario_logado.nome.split(' ')[0] }}</a>
+            {% endif %}
+            <a class="lateral__cardapio" href="{{ url_for('cardapio.pagina_cardapio') }}">Ver cardápio</a>
+            <form method="post" action="{{ url_for('auth.logout') }}">
+                {{ ui.csrf() }}
+                <button class="lateral__sair" type="submit">Sair</button>
+            </form>
+        </div>
+    </aside>
+
+    <main id="conteudo" class="painel__conteudo">
+        {% include "componentes/mensagens.html" %}
+        {% block conteudo %}{% endblock %}
+    </main>
+</div>
+{% endblock %}

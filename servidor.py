@@ -83,14 +83,19 @@ from comandos import registrar_comandos  # noqa: E402
 
 registrar_comandos(app)
 
-from servicos.formatacao import formatar_moeda, rotulo_forma_pagamento, rotulo_status_pedido, rotulo_tipo_pedido  # noqa: E402
+from servicos.formatacao import (  # noqa: E402
+    etapas_do_pedido, formatar_data_hora, formatar_moeda, rotulo_forma_pagamento, rotulo_status_pedido,
+    rotulo_tipo_pedido,
+)
 from servicos.integracoes import url_google_maps  # noqa: E402
 
 app.jinja_env.filters['moeda'] = formatar_moeda
 app.jinja_env.filters['forma_pagamento'] = rotulo_forma_pagamento
 app.jinja_env.filters['status_pedido'] = rotulo_status_pedido
 app.jinja_env.filters['tipo_pedido'] = rotulo_tipo_pedido
+app.jinja_env.filters['data_hora'] = formatar_data_hora
 app.jinja_env.globals['url_google_maps'] = url_google_maps
+app.jinja_env.globals['etapas_do_pedido'] = etapas_do_pedido
 
 
 @app.before_request
@@ -134,12 +139,12 @@ def erro_csrf(_erro):
 
 @app.errorhandler(403)
 def acesso_negado(_erro):
-    return render_template('erro.html', titulo='Acesso negado', mensagem='Você não tem permissão para acessar esta página.'), 403
+    return render_template('erro.html', titulo='Acesso negado', mensagem='Esta página é de outra função da equipe. Entre com a conta certa ou volte ao cardápio.'), 403
 
 
 @app.errorhandler(404)
 def nao_encontrado(_erro):
-    return render_template('erro.html', titulo='Não encontrado', mensagem='Página não encontrada.'), 404
+    return render_template('erro.html', titulo='Página não encontrada', mensagem='O endereço que você abriu não existe ou mudou de lugar. Confira o link ou volte ao cardápio.'), 404
 
 
 @app.errorhandler(TooManyRequests)
@@ -156,4 +161,4 @@ def health():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=os.environ.get('DEBUG', 'false').lower() == 'true')
+    app.run(host='0.0.0.0', port=5001, debug=os.environ.get('DEBUG', 'false').lower() == 'true')

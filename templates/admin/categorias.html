@@ -1,32 +1,39 @@
-{% extends "base.html" %}
-{% block titulo %}Categorias{% endblock %}
+{% extends "painel_base.html" %}
+{% import "componentes/ui.html" as ui with context %}
+{% block titulo %}Categorias | Brasa do Cerrado{% endblock %}
 {% block conteudo %}
-    <h1>Categorias</h1>
-    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
-    <table>
-        <thead><tr><th>Nome</th><th>Descrição</th><th>Ativa</th></tr></thead>
-        <tbody>
-            {% for categoria in categorias %}
-            <tr>
-                <td>{{ categoria.nome }}</td>
-                <td>{{ categoria.descricao or '-' }}</td>
-                <td>{{ 'Sim' if categoria.ativo else 'Não' }}</td>
-            </tr>
+    {{ ui.cabecalho('Categorias', 'As seções do cardápio, na ordem em que o cliente vê.') }}
+    {{ ui.erro(erro) }}
+
+    <div class="duas-colunas duas-colunas--lista">
+        <section aria-label="Categorias cadastradas">
+            {% if categorias %}
+            <div class="tabela-rolagem">
+                <table class="tabela tabela--fichas">
+                    <thead><tr><th>Categoria</th><th>Descrição</th><th>Situação</th></tr></thead>
+                    <tbody>
+                        {% for categoria in categorias %}
+                        <tr>
+                            <td><strong>{{ categoria.nome }}</strong></td>
+                            <td data-rotulo="Descrição">{{ categoria.descricao or '-' }}</td>
+                            <td data-rotulo="Situação">{{ ui.selo_sim_nao(categoria.ativo, 'Ativa', 'Inativa') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% else %}
-            <tr><td colspan="3">Nenhuma categoria cadastrada.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            {{ ui.vazio('Nenhuma categoria cadastrada', 'Crie a primeira seção do cardápio, como Pizzas salgadas ou Bebidas.') }}
+            {% endif %}
+        </section>
 
-    <h2>Nova categoria</h2>
-    <form method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <label for="nome">Nome</label>
-        <input type="text" id="nome" name="nome" required>
-        <label for="descricao">Descrição</label>
-        <input type="text" id="descricao" name="descricao">
-        <button type="submit">Criar</button>
-    </form>
-
-    <p><a href="{{ url_for('admin.painel') }}">Voltar ao painel</a></p>
+        {% call ui.cartao('Nova categoria', classe='cartao--destaque') %}
+        <form class="formulario" method="post">
+            {{ ui.csrf() }}
+            {{ ui.campo('nome', 'Nome', obrigatorio=True, attrs={'placeholder': 'Pizzas doces'}) }}
+            {{ ui.campo('descricao', 'Descrição') }}
+            <button class="botao botao--brasa" type="submit">Criar categoria</button>
+        </form>
+        {% endcall %}
+    </div>
 {% endblock %}

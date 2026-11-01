@@ -1,0 +1,10 @@
+{% with mensagens = get_flashed_messages(with_categories=true) %}
+    {% if mensagens %}
+    <ul class="mensagens" aria-live="polite">
+        {% for categoria, mensagem in mensagens %}
+        {% set tom = 'erro' if categoria in ('erro', 'error', 'danger') else ('ok' if categoria in ('sucesso', 'success') else 'info') %}
+        <li class="aviso aviso--{{ tom }}" role="{{ 'alert' if tom == 'erro' else 'status' }}">{{ mensagem }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+{% endwith %}

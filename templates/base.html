@@ -1,70 +1,66 @@
+{% import "componentes/ui.html" as ui with context %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block titulo %}Pizzaria{% endblock %}</title>
+    <meta name="theme-color" content="#f6f5f1">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <title>{% block titulo %}Brasa do Cerrado{% endblock %}</title>
+    <link rel="preload" href="{{ url_for('static', filename='fonts/instrument-sans-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ url_for('static', filename='fonts/bricolage-grotesque-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/cardapio.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/cart.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pizza.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/componentes.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/paginas.css') }}">
     {% block head %}{% endblock %}
 </head>
-<body class="site-shell {% block corpo_classe %}{% endblock %}" data-page="{% block pagina_js %}base{% endblock %}">
-    <header class="site-header">
-        <a class="brand" href="{{ url_for('cardapio.pagina_inicial') }}" aria-label="Voltar à página inicial">
-            <span class="brand-mark" aria-hidden="true">✦</span>
-            <span class="brand-copy"><strong>Mandacaru</strong><small>pizzaria de quintal</small></span>
-        </a>
-        <nav class="main-nav" aria-label="Navegação principal">
-            <a href="{{ url_for('cardapio.pagina_cardapio') }}">Cardápio</a>
-            <a href="{{ url_for('carrinho.ver_carrinho') }}">Sacola</a>
+<body class="{% block corpo_classe %}{% endblock %}" data-page="{% block pagina_js %}base{% endblock %}">
+    <a class="pular-conteudo" href="#conteudo">Pular para o conteúdo</a>
+    {% block casca %}
+    <header class="topo">
+        {{ ui.marca() }}
+        <nav class="topo__nav" aria-label="Navegação principal">
+            <a href="{{ url_for('cardapio.pagina_cardapio') }}"{% if request.endpoint == 'cardapio.pagina_cardapio' %} aria-current="page"{% endif %}>Cardápio</a>
+            <a href="{{ url_for('cardapio.montar_pizza') }}"{% if request.endpoint == 'cardapio.montar_pizza' %} aria-current="page"{% endif %}>Monte a sua</a>
+            {% if usuario_logado and usuario_logado.tipo == 'cliente' %}
+            <a href="{{ url_for('pedido.meus_pedidos') }}"{% if request.endpoint == 'pedido.meus_pedidos' %} aria-current="page"{% endif %}>Meus pedidos</a>
+            {% endif %}
+            {% if usuario_logado and usuario_logado.tipo != 'cliente' %}
+            <a href="{{ url_for('admin.painel') if usuario_logado.is_gerencia else (url_for('cozinha.fila_pedidos') if usuario_logado.tipo == 'cozinha' else (url_for('entrega.minhas_entregas') if usuario_logado.tipo == 'entregador' else url_for('entrega.despacho'))) }}">Painel da casa</a>
+            {% endif %}
             {% if usuario_logado %}
-                {% if usuario_logado.tipo == 'cliente' %}
-                    <a href="{{ url_for('pedido.meus_pedidos') }}">Meus pedidos</a>
-                {% endif %}
-                {% if usuario_logado.tipo == 'cozinha' or usuario_logado.is_gerencia %}
-                    <a href="{{ url_for('cozinha.fila_pedidos') }}">Cozinha</a>
-                {% endif %}
-                {% if usuario_logado.is_gerencia %}
-                    <a href="{{ url_for('admin.painel') }}">Administração</a>
-                {% endif %}
-                <a class="nav-account" href="{{ url_for('auth.minha_conta') }}">{{ usuario_logado.nome }}</a>
-                <form method="post" action="{{ url_for('auth.logout') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button class="link-button" type="submit">Sair</button>
-                </form>
+            <a class="so-celular" href="{{ url_for('auth.minha_conta') }}"{% if request.endpoint == 'auth.minha_conta' %} aria-current="page"{% endif %}>Minha conta</a>
             {% else %}
-                <a class="nav-login" href="{{ url_for('auth.pagina_login') }}">Entrar</a>
+            <a class="so-celular" href="{{ url_for('auth.pagina_login') }}"{% if request.endpoint in ('auth.pagina_login', 'auth.pagina_cadastro') %} aria-current="page"{% endif %}>Entrar</a>
             {% endif %}
         </nav>
+        <div class="topo__conta">
+            <a class="topo__sacola" href="{{ url_for('carrinho.ver_carrinho') }}"{% if request.endpoint == 'carrinho.ver_carrinho' %} aria-current="page"{% endif %}>Sacola</a>
+            {% if usuario_logado %}
+            <a class="topo__usuario" href="{{ url_for('auth.minha_conta') }}"{% if request.endpoint == 'auth.minha_conta' %} aria-current="page"{% endif %}>{{ usuario_logado.nome.split(' ')[0] }}</a>
+            <form method="post" action="{{ url_for('auth.logout') }}">
+                {{ ui.csrf() }}
+                <button class="topo__sair" type="submit">Sair</button>
+            </form>
+            {% else %}
+            <a class="topo__entrar" href="{{ url_for('auth.pagina_login') }}"{% if request.endpoint in ('auth.pagina_login', 'auth.pagina_cadastro') %} aria-current="page"{% endif %}>Entrar</a>
+            {% endif %}
+        </div>
     </header>
 
-    <main class="page-content">
-        {% with mensagens = get_flashed_messages(with_categories=true) %}
-            {% if mensagens %}
-                <ul class="mensagens">
-                    {% for categoria, mensagem in mensagens %}
-                        <li class="mensagem-{{ categoria }}">{{ mensagem }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
-
+    <main id="conteudo" class="{% block main_classe %}conteudo{% endblock %}">
+        {% include "componentes/mensagens.html" %}
         {% block conteudo %}{% endblock %}
     </main>
+    {% endblock %}
 
     <div id="site-modal" class="modal" aria-hidden="true">
-        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-            <div class="modal-head">
-                <h3 id="modal-title">Detalhes</h3>
-                <button id="modal-close" class="modal-close" type="button" aria-label="Fechar">×</button>
+        <div class="modal__caixa" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <div class="modal__topo">
+                <h2 id="modal-title">Detalhes</h2>
+                <button id="modal-close" class="modal__fechar" type="button" aria-label="Fechar">×</button>
             </div>
-            <div class="modal-body">
-                <p id="modal-text">Informação do pedido.</p>
-            </div>
+            <p id="modal-text">Informação do pedido.</p>
         </div>
     </div>
 

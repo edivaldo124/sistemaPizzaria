@@ -1,14 +1,55 @@
-{% extends "base.html" %}
-{% block titulo %}Minha conta{% endblock %}
+{% extends "painel_base.html" if usuario.tipo != 'cliente' else "base.html" %}
+{% import "componentes/ui.html" as ui with context %}
+{% block titulo %}Minha conta | Brasa do Cerrado{% endblock %}
 {% block conteudo %}
-    <h1>Minha conta</h1>
-    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
-    <p>Nome: {{ usuario.nome }}</p>
-    <p>E-mail: {{ usuario.email }}</p>
-    <p>Telefone: {{ usuario.telefone or '-' }}</p>
-    {% if usuario.tipo == 'cliente' %}
-        <p><a href="{{ url_for('endereco.listar') }}">Meus endereços</a></p>
-        <p><a href="{{ url_for('pedido.meus_pedidos') }}">Meus pedidos</a></p>
-    {% endif %}
-    <p><a href="{{ url_for('cardapio.pagina_cardapio') }}">Voltar ao cardápio</a></p>
+    {% call ui.cabecalho('Olá, ' ~ usuario.nome.split(' ')[0]) %}
+        {{ ui.botao_post(url_for('auth.logout'), 'Sair da conta', 'contorno') }}
+    {% endcall %}
+    {{ ui.erro(erro) }}
+
+    <div class="conta">
+        {% call ui.cartao('Seus dados') %}
+            {{ ui.dados([
+                ('Nome', usuario.nome),
+                ('E-mail', usuario.email),
+                ('Telefone', usuario.telefone or 'Não informado'),
+                ('Perfil', (usuario.tipo | capitalize) if usuario.tipo != 'cliente' else None),
+            ]) }}
+        {% endcall %}
+
+        {% if usuario.tipo == 'cliente' %}
+        <nav class="conta__atalhos" aria-label="Atalhos da conta">
+            <a class="atalho" href="{{ url_for('pedido.meus_pedidos') }}">
+                <strong>Meus pedidos</strong><span>Acompanhe o pedido de agora e veja os anteriores.</span>
+            </a>
+            <a class="atalho" href="{{ url_for('endereco.listar') }}">
+                <strong>Meus endereços</strong><span>Cadastre onde a pizza deve chegar.</span>
+            </a>
+            <a class="atalho" href="{{ url_for('cardapio.pagina_cardapio') }}">
+                <strong>Fazer um pedido</strong><span>Voltar para o cardápio.</span>
+            </a>
+        </nav>
+        {% else %}
+        <nav class="conta__atalhos" aria-label="Atalhos de trabalho">
+            {% if usuario.is_gerencia %}
+            <a class="atalho" href="{{ url_for('admin.painel') }}">
+                <strong>Resumo do dia</strong><span>Acompanhe métricas, fila e operação da casa.</span>
+            </a>
+            {% endif %}
+            {% if usuario.tipo == 'cozinha' or usuario.is_gerencia %}
+            <a class="atalho" href="{{ url_for('cozinha.fila_pedidos') }}">
+                <strong>Fila da cozinha</strong><span>Confirme pedidos e atualize o preparo no forno.</span>
+            </a>
+            {% endif %}
+            {% if usuario.tipo == 'entregador' %}
+            <a class="atalho" href="{{ url_for('entrega.minhas_entregas') }}">
+                <strong>Minhas entregas</strong><span>Veja os pedidos atribuídos a você e abra a rota.</span>
+            </a>
+            {% endif %}
+            <a class="atalho" href="{{ url_for('cardapio.pagina_cardapio') }}">
+                <strong>Ver cardápio da casa</strong><span>Consulte os sabores e preços publicados hoje.</span>
+            </a>
+        </nav>
+        {% endif %}
+    </div>
 {% endblock %}

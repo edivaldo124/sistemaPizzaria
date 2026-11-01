@@ -1,14 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.cart-table tbody tr').forEach((row, index) => {
-    row.classList.add('js-reveal');
-    row.style.transitionDelay = `${Math.min(index * 50, 250)}ms`;
-    requestAnimationFrame(() => row.classList.add('is-visible'));
-  });
-
-  document.querySelectorAll('.qty-form, .cart-table td:last-child form').forEach((form) => {
-    form.addEventListener('submit', () => {
-      form.closest('tr')?.classList.add('js-loading');
-      form.querySelector('button')?.classList.add('js-pulse');
+  // Quantidade zero remove o item: pede confirmação antes.
+  document.querySelectorAll('.sacola-item__qtd').forEach((form) => {
+    form.addEventListener('submit', (evento) => {
+      const quantidade = Number(form.querySelector('input[name="quantidade"]')?.value);
+      if (quantidade === 0 && !window.confirm('Quantidade zero tira o item da sacola. Continuar?')) {
+        evento.preventDefault();
+      }
     });
   });
 });

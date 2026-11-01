@@ -1,53 +1,56 @@
-{% extends "base.html" %}
-{% block titulo %}Configuração da loja{% endblock %}
+{% extends "painel_base.html" %}
+{% import "componentes/ui.html" as ui with context %}
+{% block titulo %}Configuração | Brasa do Cerrado{% endblock %}
 {% block conteudo %}
-    <h1>Configuração da loja</h1>
-    <form method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {{ ui.cabecalho('Configuração da loja', 'Horário, pedido mínimo e as regras de preço e cupom.') }}
+    {{ ui.erro(erro) }}
 
-        <label>Horário de abertura
-            <input type="time" name="horario_abertura" value="{{ config.horario_abertura.strftime('%H:%M') if config.horario_abertura else '' }}">
-        </label>
-        <label>Horário de fechamento
-            <input type="time" name="horario_fechamento" value="{{ config.horario_fechamento.strftime('%H:%M') if config.horario_fechamento else '' }}">
-        </label>
-        <label>Valor mínimo do pedido
-            <input type="text" name="valor_minimo_pedido" value="{{ config.valor_minimo_pedido }}">
-        </label>
+    <form class="configuracao" method="post">
+        {{ ui.csrf() }}
 
-        <fieldset>
-            <legend>Preço de pizza com múltiplos sabores (RN03)</legend>
-            <label>
-                <input type="radio" name="regra_preco_multiplos_sabores" value="maior_valor"
-                    {{ 'checked' if config.regra_preco_multiplos_sabores == 'maior_valor' }}>
-                Cobrar o valor do sabor mais caro
-            </label>
-            <label>
-                <input type="radio" name="regra_preco_multiplos_sabores" value="media"
-                    {{ 'checked' if config.regra_preco_multiplos_sabores == 'media' }}>
-                Cobrar a média entre os sabores
-            </label>
+        {% call ui.cartao('Funcionamento') %}
+        <div class="formulario formulario--duas">
+            {{ ui.campo('horario_abertura', 'Abre às', tipo='time', valor=config.horario_abertura.strftime('%H:%M') if config.horario_abertura else '') }}
+            {{ ui.campo('horario_fechamento', 'Fecha às', tipo='time', valor=config.horario_fechamento.strftime('%H:%M') if config.horario_fechamento else '') }}
+            {{ ui.campo('valor_minimo_pedido', 'Pedido mínimo (R$)', valor=config.valor_minimo_pedido, attrs={'inputmode': 'decimal'}) }}
+        </div>
+        <fieldset class="grupo grupo--espaco">
+            <legend>Fora do horário</legend>
+            <div class="opcoes opcoes--lista-duas">
+                <label class="opcao" for="fora_horario_bloquear">
+                    <input type="radio" id="fora_horario_bloquear" name="fora_horario" value="bloquear" {{ 'checked' if config.fora_horario == 'bloquear' }}>
+                    <strong>Bloquear novos pedidos</strong><small>O cardápio avisa que a loja está fechada</small>
+                </label>
+                <label class="opcao" for="fora_horario_agendar">
+                    <input type="radio" id="fora_horario_agendar" name="fora_horario" value="agendar" {{ 'checked' if config.fora_horario == 'agendar' }}>
+                    <strong>Aceitar agendamento</strong><small>O pedido entra na fila quando a casa abrir</small>
+                </label>
+            </div>
         </fieldset>
+        {% endcall %}
 
-        <fieldset>
-            <legend>Fora do horário de atendimento (RN18)</legend>
-            <label>
-                <input type="radio" name="fora_horario" value="bloquear"
-                    {{ 'checked' if config.fora_horario == 'bloquear' }}>
-                Bloquear novos pedidos
-            </label>
-            <label>
-                <input type="radio" name="fora_horario" value="agendar"
-                    {{ 'checked' if config.fora_horario == 'agendar' }}>
-                Permitir agendamento
-            </label>
+        {% call ui.cartao('Preço e desconto') %}
+        <fieldset class="grupo">
+            <legend>Pizza com mais de um sabor</legend>
+            <div class="opcoes opcoes--lista-duas">
+                <label class="opcao" for="regra_maior_valor">
+                    <input type="radio" id="regra_maior_valor" name="regra_preco_multiplos_sabores" value="maior_valor" {{ 'checked' if config.regra_preco_multiplos_sabores == 'maior_valor' }}>
+                    <strong>Cobrar o sabor mais caro</strong><small>Meio a meio de R$ 50 e R$ 60 sai por R$ 60</small>
+                </label>
+                <label class="opcao" for="regra_media">
+                    <input type="radio" id="regra_media" name="regra_preco_multiplos_sabores" value="media" {{ 'checked' if config.regra_preco_multiplos_sabores == 'media' }}>
+                    <strong>Cobrar a média</strong><small>Meio a meio de R$ 50 e R$ 60 sai por R$ 55</small>
+                </label>
+            </div>
         </fieldset>
-
-        <label>
-            <input type="checkbox" name="permite_cupom_acumulado" {{ 'checked' if config.permite_cupom_acumulado }}>
-            Permitir acumular mais de um cupom no mesmo pedido
+        <label class="opcao opcao--linha grupo--espaco" for="permite_cupom_acumulado">
+            <input type="checkbox" id="permite_cupom_acumulado" name="permite_cupom_acumulado" {{ 'checked' if config.permite_cupom_acumulado }}>
+            <span><strong>Permitir mais de um cupom no mesmo pedido</strong></span>
         </label>
+        {% endcall %}
 
-        <button type="submit">Salvar</button>
+        <div class="configuracao__acoes">
+            <button class="botao botao--brasa" type="submit">Salvar configuração</button>
+        </div>
     </form>
 {% endblock %}

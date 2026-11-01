@@ -1,86 +1,119 @@
 {% extends "base.html" %}
-{% block titulo %}Início | Mandacaru — pizzaria de quintal{% endblock %}
+{% import "componentes/ui.html" as ui with context %}
+{% block titulo %}Início | Brasa do Cerrado — pizza no forno a lenha{% endblock %}
 {% block pagina_js %}inicio{% endblock %}
 {% block corpo_classe %}pagina-inicio{% endblock %}
 
 {% block head %}
-    <link rel="preload" href="{{ url_for('static', filename='fonts/alfa-slab-one-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/inicio.css') }}">
 {% endblock %}
 
+{# As manchetes acompanham o vídeo: massa, molho, cobertura, forno, mesa. #}
+{% set MANCHETES = [
+    ('Massa', ['Massa aberta', 'à mão']),
+    ('Molho', ['Tomate fresco,', 'molho da casa']),
+    ('Cobertura', ['O que a terra', 'dá, vai por cima']),
+    ('Forno', ['Lenha de', 'cerrado']),
+    ('Mesa', ['Saiu do forno.', 'Qual vai ser?']),
+] %}
+
 {% block conteudo %}
-    <section class="video-hero" data-video-hero data-scrub-distance="2400" data-unlock-threshold="220">
-        <video
-            class="video-hero__video"
-            src="{{ url_for('static', filename='videos/forno.mp4') }}"
-            poster="{{ url_for('static', filename='videos/forno-poster.jpg') }}"
-            muted
-            playsinline
-            preload="auto"
-            aria-hidden="true"
-        ></video>
+    <h1 class="sr-only">Brasa do Cerrado: pizza assada em forno a lenha</h1>
 
-        <div class="video-hero__overlay" aria-hidden="true"></div>
+    <section class="hero" data-hero data-total="{{ MANCHETES | length }}" aria-label="Da massa ao forno">
+        <div class="hero__trilha">
+            <div class="hero__palco">
+                {# Em tela em pé (celular) entra a versão vertical, para a pizza não ficar cortada. #}
+                <video
+                    class="hero__video"
+                    poster="{{ url_for('static', filename='videos/forno-poster.jpg') }}"
+                    muted
+                    playsinline
+                    preload="auto"
+                    aria-hidden="true"
+                >
+                    <source src="{{ url_for('static', filename='videos/forno-vertical.mp4') }}" type="video/mp4" media="(max-aspect-ratio: 4/5)">
+                    <source src="{{ url_for('static', filename='videos/forno.mp4') }}" type="video/mp4">
+                </video>
+                <div class="hero__veu" aria-hidden="true"></div>
 
-        <a
-            href="{{ url_for('cardapio.pagina_cardapio') }}"
-            class="video-hero__skip"
-            data-hero-skip
-            aria-label="Pular introdução e ver o cardápio"
-        >Ver cardápio</a>
+                <div class="hero__manchetes">
+                    {% for etapa, linhas in MANCHETES %}
+                    <h2 class="manchete" data-manchete aria-hidden="{{ 'false' if loop.first else 'true' }}">
+                        <small class="manchete__etapa">{{ etapa }}</small>
+                        {% for linha in linhas %}<span class="manchete__linha"><span>{{ linha }}</span></span>{% endfor %}
+                    </h2>
+                    {% endfor %}
+                </div>
 
-        <div class="video-hero__content">
-            <h1 class="video-hero__title" data-hero-title>CARDÁPIO</h1>
-            <p class="video-hero__tagline" data-hero-tagline>Direto do forno a lenha</p>
-        </div>
+                <div class="hero__acoes" data-hero-acoes>
+                    {{ ui.link_botao(url_for('cardapio.pagina_cardapio'), 'Ver o cardápio', 'brasa') }}
+                    {{ ui.link_botao(url_for('cardapio.montar_pizza'), 'Montar a minha', 'contorno', 'hero__secundario') }}
+                </div>
 
-        <div class="video-hero__hint" data-hero-hint aria-hidden="true">
-            <span class="video-hero__hint-text">ROLE</span>
-            <svg class="video-hero__hint-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M7 10l5 5 5-5" />
-            </svg>
-        </div>
+                <div class="hero__medidor" aria-hidden="true">
+                    <span class="hero__medidor-linha"><i data-hero-linha></i></span>
+                    <span class="hero__medidor-num" data-hero-num>00</span>
+                </div>
 
-        <div class="video-hero__progress" aria-hidden="true">
-            <div class="video-hero__progress-bar" data-hero-progress></div>
+                <div class="hero__rolagem" data-hero-dica aria-hidden="true">Role para acender o forno</div>
+
+                <div class="hero__carregando" data-hero-carregando>
+                    <span class="hero__carregando-nome">Brasa do Cerrado</span>
+                    <span class="hero__carregando-barra"><i></i></span>
+                    <span class="hero__carregando-texto">Acendendo o forno</span>
+                </div>
+            </div>
         </div>
     </section>
 
     <section class="destaques" id="destaques">
         <div class="destaques__container">
-            <div class="destaques__header js-reveal" style="--i: 0;">
-                <p class="eyebrow">Destaques da casa</p>
-                <h2 class="destaques__titulo">Nossos queridinhos</h2>
-                <p class="destaques__subtitulo">Massas artesanais de longa fermentação, ingredientes frescos e assadas no calor da lenha.</p>
-            </div>
+            <header class="destaques__header">
+                <h2 class="destaques__titulo">Os que mais saem do forno</h2>
+                <p class="destaques__subtitulo">Massa de fermentação lenta, ingrediente da região e o calor da lenha de cerrado.</p>
+            </header>
 
             {% if destaques %}
             <div class="destaques__grid">
                 {% for produto in destaques %}
-                <article class="destaque-card js-reveal" style="--i: {{ loop.index }};">
-                    <div class="destaque-card__corpo">
+                <article class="destaque-card">
+                    <div>
                         <h3 class="destaque-card__nome">{{ produto.nome }}</h3>
                         {% if produto.descricao %}
                         <p class="destaque-card__descricao">{{ produto.descricao }}</p>
                         {% endif %}
                     </div>
                     <div class="destaque-card__rodape">
-                        <span class="destaque-card__preco">{{ produto.preco | moeda }}</span>
-                        <a class="button button-accent destaque-card__btn" href="{{ url_for('cardapio.pagina_cardapio') }}">Pedir</a>
+                        <span class="preco destaque-card__preco">{{ produto.preco | moeda }}</span>
+                        <form class="form-acao" method="post" action="{{ url_for('carrinho.adicionar_produto') }}">
+                            {{ ui.csrf() }}
+                            <input type="hidden" name="produto_id" value="{{ produto.id }}">
+                            <input type="hidden" name="quantidade" value="1">
+                            <input type="hidden" name="observacoes" value="">
+                            <button class="botao botao--brasa botao--pequeno" type="submit" aria-label="Adicionar {{ produto.nome }} à sacola">Adicionar</button>
+                        </form>
                     </div>
                 </article>
                 {% endfor %}
             </div>
             {% else %}
-            <p class="empty-state js-reveal" style="--i: 1;">Explore todas as opções disponíveis em nosso cardápio completo.</p>
+            {{ ui.vazio('Os destaques ainda não foram escolhidos', 'O cardápio completo já está no ar.') }}
             {% endif %}
 
-            <div class="destaques__acao js-reveal" style="--i: {{ (destaques|length) + 1 }};">
-                <a class="button button-accent button-cardapio-completo" href="{{ url_for('cardapio.pagina_cardapio') }}">
-                    Ver cardápio completo
-                </a>
+            <div class="destaques__acao">
+                {{ ui.link_botao(url_for('cardapio.pagina_cardapio'), 'Ver cardápio completo', 'contorno') }}
             </div>
         </div>
+    </section>
+
+    <section class="montar-faixa">
+        <div class="montar-faixa__conteudo">
+            <h2>Do seu jeito, ingrediente por ingrediente.</h2>
+            <p>Escolha o tamanho, os sabores, a massa e a borda. A pizza se monta na tela enquanto você decide.</p>
+            {{ ui.link_botao(url_for('cardapio.montar_pizza'), 'Montar minha pizza', 'pequi') }}
+        </div>
+        {{ ui.pizza_vitrine('montar-faixa__pizza') }}
     </section>
 {% endblock %}
 

@@ -1,29 +1,45 @@
-{% extends "base.html" %}
-{% block titulo %}Despacho de entregas{% endblock %}
+{% extends "painel_base.html" %}
+{% import "componentes/ui.html" as ui with context %}
+{% block titulo %}Despacho | Brasa do Cerrado{% endblock %}
 {% block conteudo %}
-    <h1>Pedidos prontos para entrega</h1>
-    <table>
-        <thead><tr><th>Pedido</th><th>Endereço</th><th>Atribuir entregador</th></tr></thead>
-        <tbody>
-            {% for pedido in pedidos %}
-            <tr>
-                <td>{{ pedido.numero }}</td>
-                <td>{{ pedido.endereco_entrega }}</td>
-                <td>
-                    <form method="post" action="{{ url_for('entrega.atribuir', pedido_id=pedido.id) }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <select name="entregador_id" required>
-                            {% for entregador in entregadores %}
-                            <option value="{{ entregador.id }}">{{ entregador.usuario.nome }}</option>
-                            {% endfor %}
-                        </select>
-                        <button type="submit">Enviar para entrega</button>
-                    </form>
-                </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="3">Nenhum pedido aguardando entregador.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {{ ui.cabecalho('Despacho de entregas', 'Pizzas prontas esperando um entregador.') }}
+    {{ ui.erro(erro) }}
+
+    {% if pedidos %}
+    <div class="fichas-grade">
+        {% for pedido in pedidos %}
+        {% set end = pedido.endereco_entrega %}
+        <article class="ficha">
+            <header class="ficha__topo">
+                <span class="num">#{{ pedido.numero }}</span>
+                {{ ui.selo_status(pedido.status) }}
+            </header>
+            <p class="ficha__endereco">
+                {% if end and end.logradouro is defined %}
+                    {{ end.logradouro }}, {{ end.numero }}{% if end.complemento %} - {{ end.complemento }}{% endif %} · {{ end.bairro }}
+                {% else %}
+                    {{ end or 'Endereço não informado' }}
+                {% endif %}
+            </p>
+            <footer class="ficha__rodape">
+                <span>{{ pedido.cliente.usuario.nome if pedido.cliente and pedido.cliente.usuario else 'Cliente' }}</span>
+                <span class="num">{{ pedido.criado_em | data_hora('%H:%M') }}</span>
+            </footer>
+            <form class="ficha__atribuir" method="post" action="{{ url_for('entrega.atribuir', pedido_id=pedido.id) }}">
+                {{ ui.csrf() }}
+                {% call ui.selecao('entregador_id', 'Entregador', id='entregador-' ~ pedido.id) %}
+                    {% for entregador in entregadores %}
+                    <option value="{{ entregador.id }}">{{ entregador.usuario.nome }}</option>
+                    {% else %}
+                    <option value="" disabled selected>Nenhum entregador ativo</option>
+                    {% endfor %}
+                {% endcall %}
+                <button class="botao botao--brasa botao--largo" type="submit"{% if not entregadores %} disabled{% endif %}>Enviar para entrega</button>
+            </form>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+        {{ ui.vazio('Nenhuma pizza esperando entregador', 'Quando a cozinha marcar um pedido de entrega como pronto, ele aparece aqui.') }}
+    {% endif %}
 {% endblock %}

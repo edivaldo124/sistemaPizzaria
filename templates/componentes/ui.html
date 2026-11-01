@@ -1,0 +1,190 @@
+{# Componentes de interface da Brasa do Cerrado.
+   Uso: {% import "componentes/ui.html" as ui %} e depois {{ ui.botao_post(...) }}.
+   Estilos correspondentes em static/css/componentes.css. #}
+
+{# ---------- Marca e ícones ---------- #}
+
+{# Selo da marca: quadrado de brasa com a chama. #}
+{% macro selo_marca(classe='') -%}
+<svg class="selo-marca {{ classe }}" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+    <rect width="40" height="40" rx="12" fill="var(--brasa)"/>
+    <path d="M20.4 7.5c.9 4.3 6.9 7.2 6.9 13.7a7.3 7.3 0 0 1-14.6 0c0-3.3 1.8-5.1 3.3-7 .5 2.3 1.5 3.4 2.6 3.9-.6-3.7-.1-7.7 1.8-10.6Z" fill="#fff"/>
+    <path d="M20 31.2a3.7 3.7 0 0 1-3.7-3.7c0-2.1 1.4-3.1 2.2-4.4.4 1.2 1 1.8 1.7 2.1-.1-1.4.2-2.6 1-3.6.4 2.2 2.5 3.2 2.5 5.9A3.7 3.7 0 0 1 20 31.2Z" fill="var(--pequi)"/>
+</svg>
+{%- endmacro %}
+
+{% macro marca(apoio='pizza no forno a lenha', destino=None) -%}
+<a class="marca" href="{{ destino or url_for('cardapio.pagina_inicial') }}" aria-label="Brasa do Cerrado, página inicial">
+    {{ selo_marca('marca__selo') }}
+    <span class="marca__texto"><strong>Brasa do Cerrado</strong><small>{{ apoio }}</small></span>
+</a>
+{%- endmacro %}
+
+{# Foto da pizza pronta, sem fundo (gerada por scripts/gerar_video_hero.py com as fotos da tela de montar). #}
+{% macro pizza_vitrine(classe='') -%}
+<img class="pizza-vitrine {{ classe }}" src="{{ url_for('static', filename='imagens/pizza/vitrine.webp') }}" alt="" width="720" height="720" loading="lazy" decoding="async">
+{%- endmacro %}
+
+{# Forno a lenha em arco. aceso=False apaga o fogo (pedido encerrado). #}
+{% macro forno(classe='', aceso=True) -%}
+<svg class="forno {{ classe }}" viewBox="0 0 200 150" aria-hidden="true" focusable="false">
+    <defs><radialGradient id="fo-brilho" cx=".5" cy="1" r=".8"><stop offset="0" stop-color="#ff7a3d" stop-opacity=".9"/><stop offset="1" stop-color="#ff7a3d" stop-opacity="0"/></radialGradient></defs>
+    {% if aceso %}<ellipse cx="100" cy="146" rx="96" ry="64" fill="url(#fo-brilho)"/>{% endif %}
+    <path d="M30 146V96a70 70 0 0 1 140 0v50Z" fill="#3a2a22" stroke="#5a443a" stroke-width="2"/>
+    <path d="M30 146V96a70 70 0 0 1 140 0v50Z" fill="none" stroke="#6b5145" stroke-width="2" stroke-dasharray="1 9" stroke-linecap="round" transform="translate(0 -8) scale(1 1.05)" opacity=".7"/>
+    <path d="M64 146v-40a36 36 0 0 1 72 0v40Z" fill="#120c0a" stroke="#6b5145" stroke-width="3"/>
+    {% if aceso %}<path class="forno__fogo" d="M80 146l7-22 6 11 7-26 7 21 7-14 5 30Z" fill="#ff7a3d"/>
+    <path class="forno__fogo" d="M90 146l5-13 5 8 5-15 5 12 3 8Z" fill="#f6b93b"/>{% endif %}
+</svg>
+{%- endmacro %}
+
+{% macro losango(classe='') -%}
+<svg class="losango {{ classe }}" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 1.5 18.5 10 10 18.5 1.5 10Z"/></svg>
+{%- endmacro %}
+
+{# ---------- Estrutura de página ---------- #}
+
+{# Cabeçalho de página. Ações opcionais vão no corpo do {% call %}. #}
+{% macro cabecalho(titulo, apoio=None, voltar=None, rotulo_voltar='Voltar') -%}
+<header class="cabecalho-pagina">
+    {% if voltar %}
+    <a class="botao-voltar" href="{{ voltar }}" aria-label="{{ rotulo_voltar }}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square"/></svg>
+    </a>
+    {% endif %}
+    <div class="cabecalho-pagina__texto">
+        <h1>{{ titulo }}</h1>
+        {% if apoio %}<p>{{ apoio }}</p>{% endif %}
+    </div>
+    {% if caller is defined %}<div class="cabecalho-pagina__acoes">{{ caller() }}</div>{% endif %}
+</header>
+{%- endmacro %}
+
+{# Bloco com borda e, opcionalmente, título. tom: claro | palha | carvao #}
+{% macro cartao(titulo=None, tom='claro', classe='', apoio=None) -%}
+<section class="cartao cartao--{{ tom }} {{ classe }}">
+    {% if titulo %}
+    <header class="cartao__topo">
+        <h2>{{ titulo }}</h2>
+        {% if apoio %}<p>{{ apoio }}</p>{% endif %}
+    </header>
+    {% endif %}
+    {{ caller() }}
+</section>
+{%- endmacro %}
+
+{% macro erro(texto) -%}
+{% if texto %}<p class="aviso aviso--erro" role="alert">{{ texto }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro vazio(titulo, texto=None, link=None, rotulo_link=None) -%}
+<div class="vazio">
+    {{ losango('vazio__marca') }}
+    <p class="vazio__titulo">{{ titulo }}</p>
+    {% if texto %}<p class="vazio__texto">{{ texto }}</p>{% endif %}
+    {% if link %}<a class="botao botao--brasa" href="{{ link }}">{{ rotulo_link }}</a>{% endif %}
+</div>
+{%- endmacro %}
+
+{# ---------- Ações ---------- #}
+
+{# Botão que envia POST com CSRF. variante: brasa | pequi | buriti | carvao | contorno | discreto #}
+{% macro botao_post(url, texto, variante='brasa', classe='', confirmar=None, largo=False) -%}
+<form class="form-acao" method="post" action="{{ url }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="botao botao--{{ variante }}{{ ' botao--largo' if largo }} {{ classe }}" type="submit"{% if confirmar %} data-confirmar="{{ confirmar }}"{% endif %}>{{ texto }}</button>
+</form>
+{%- endmacro %}
+
+{% macro link_botao(url, texto, variante='contorno', classe='') -%}
+<a class="botao botao--{{ variante }} {{ classe }}" href="{{ url }}">{{ texto }}</a>
+{%- endmacro %}
+
+{# ---------- Formulário ---------- #}
+
+{% macro campo(nome, rotulo, tipo='text', valor='', obrigatorio=False, ajuda=None, id=None, classe='', attrs={}) -%}
+{% set id_campo = id or nome %}
+<div class="campo {{ classe }}">
+    <label for="{{ id_campo }}">{{ rotulo }}{% if not obrigatorio %} <span class="campo__opcional">opcional</span>{% endif %}</label>
+    <input type="{{ tipo }}" id="{{ id_campo }}" name="{{ nome }}"{% if valor is not none and valor != '' %} value="{{ valor }}"{% endif %}{% if obrigatorio %} required{% endif %}{% if ajuda %} aria-describedby="{{ id_campo }}-ajuda"{% endif %} {{ attrs | xmlattr }}>
+    {% if ajuda %}<small class="campo__ajuda" id="{{ id_campo }}-ajuda">{{ ajuda }}</small>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro area_texto(nome, rotulo, valor='', obrigatorio=False, placeholder=None, id=None, classe='') -%}
+{% set id_campo = id or nome %}
+<div class="campo {{ classe }}">
+    <label for="{{ id_campo }}">{{ rotulo }}{% if not obrigatorio %} <span class="campo__opcional">opcional</span>{% endif %}</label>
+    <textarea id="{{ id_campo }}" name="{{ nome }}"{% if obrigatorio %} required{% endif %}{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}>{{ valor or '' }}</textarea>
+</div>
+{%- endmacro %}
+
+{# As <option> vão no corpo do {% call %}. #}
+{% macro selecao(nome, rotulo, obrigatorio=True, id=None, classe='') -%}
+{% set id_campo = id or nome %}
+<div class="campo {{ classe }}">
+    <label for="{{ id_campo }}">{{ rotulo }}{% if not obrigatorio %} <span class="campo__opcional">opcional</span>{% endif %}</label>
+    <div class="campo__selecao">
+        <select id="{{ id_campo }}" name="{{ nome }}"{% if obrigatorio %} required{% endif %}>{{ caller() }}</select>
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro csrf() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{# ---------- Dados ---------- #}
+
+{% set _TOM_STATUS = {
+    'recebido': 'brasa',
+    'confirmado': 'pequi-claro',
+    'em_preparo': 'pequi',
+    'pronto': 'buriti',
+    'saiu_para_entrega': 'carvao',
+    'entregue': 'contorno',
+    'cancelado': 'riscado',
+} %}
+
+{% macro selo(texto, tom='contorno') -%}
+<span class="selo selo--{{ tom }}">{{ texto }}</span>
+{%- endmacro %}
+
+{% macro selo_status(status) -%}
+{{ selo(status | status_pedido, _TOM_STATUS.get(status, 'contorno')) }}
+{%- endmacro %}
+
+{% macro selo_sim_nao(valor, sim='Ativo', nao='Inativo') -%}
+{{ selo(sim, 'buriti') if valor else selo(nao, 'riscado') }}
+{%- endmacro %}
+
+{# Lista de pares rótulo/valor. itens: [(rotulo, valor), ...]; valores vazios são ignorados. #}
+{% macro dados(itens, classe='') -%}
+<dl class="dados {{ classe }}">
+    {% for rotulo, valor in itens if valor %}
+    <div class="dados__linha"><dt>{{ rotulo }}</dt><dd>{{ valor }}</dd></div>
+    {% endfor %}
+</dl>
+{%- endmacro %}
+
+{% macro metrica(rotulo, valor, tom='claro') -%}
+<div class="metrica metrica--{{ tom }}">
+    <span class="metrica__valor">{{ valor }}</span>
+    <span class="metrica__rotulo">{{ rotulo }}</span>
+</div>
+{%- endmacro %}
+
+{# Linha do tempo do pedido: etapas vêm de etapas_do_pedido(pedido). #}
+{% macro linha_do_tempo(pedido) -%}
+{% set etapas = etapas_do_pedido(pedido) %}
+{% set atual = etapas.index(pedido.status) if pedido.status in etapas else -1 %}
+<ol class="linha-tempo">
+    {% for etapa in etapas %}
+    {% set estado = 'feita' if loop.index0 < atual else ('atual' if loop.index0 == atual else 'futura') %}
+    <li class="linha-tempo__etapa linha-tempo__etapa--{{ estado }}"{% if estado == 'atual' %} aria-current="step"{% endif %}>
+        {{ losango('linha-tempo__marca') }}
+        <span>{{ etapa | status_pedido }}</span>
+    </li>
+    {% endfor %}
+</ol>
+{%- endmacro %}

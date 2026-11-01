@@ -4,9 +4,11 @@
 
 ## Vídeo atual
 
-Animação gerada por código: a pizza é montada (massa, molho, queijo, coberturas) e
-assada no forno conforme a rolagem. Para regerar ou ajustar, veja
-`scripts/gerar_video_hero.py`.
+Montado com as fotos da tela "Monte sua pizza" (`static/imagens/pizza/`): a massa pousa na
+tábua, o molho espalha, o queijo derrete, as coberturas caem e a pizza passa pelo forno,
+uma etapa por manchete do hero. Para regerar ou ajustar, veja `scripts/gerar_video_hero.py`.
+O pôster é o último quadro (a pizza pronta), porque é ele que aparece quando a animação está
+desligada (movimento reduzido ou vídeo que não carregou).
 
 ## Trocando por filmagem própria
 
@@ -17,8 +19,8 @@ Basta substituir os dois arquivos mantendo os nomes.
   ```bash
   ffmpeg -i entrada.mp4 -c:v libx264 -crf 26 -g 6 -pix_fmt yuv420p -movflags +faststart -an forno.mp4
   ```
-- Pôster obrigatório com o primeiro quadro (o iOS demora a exibir o vídeo):
+- Pôster obrigatório (o iOS demora a exibir o vídeo); use o quadro da pizza pronta:
   ```bash
-  ffmpeg -i forno.mp4 -frames:v 1 -q:v 3 forno-poster.jpg
+  ffmpeg -sseof -0.1 -i forno.mp4 -frames:v 1 -q:v 3 forno-poster.jpg
   ```
 - Mantenha o assunto centralizado: no celular o vídeo é cortado nas laterais (`object-fit: cover`).

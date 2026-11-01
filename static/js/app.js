@@ -1,15 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
-  document.body.classList.add('page-ready');
-
-  const revealObserver = new IntersectionObserver((entries, observer) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      entry.target.classList.add('is-visible');
-      observer.unobserve(entry.target);
+  // Ações destrutivas pedem confirmação: <button data-confirmar="Texto da pergunta">
+  document.querySelectorAll('[data-confirmar]').forEach((botao) => {
+    botao.form?.addEventListener('submit', (evento) => {
+      if (evento.submitter === botao && !window.confirm(botao.dataset.confirmar)) evento.preventDefault();
     });
-  }, { threshold: 0.12 });
+  });
 
-  document.querySelectorAll('.js-reveal').forEach((element) => revealObserver.observe(element));
+  // Evita envio duplo: trava o formulário enquanto a próxima página carrega.
+  document.querySelectorAll('form[method="post"]').forEach((form) => {
+    form.addEventListener('submit', (evento) => {
+      // Espera os outros listeners: se algum cancelou o envio, não trava.
+      requestAnimationFrame(() => {
+        if (!evento.defaultPrevented) form.classList.add('js-loading');
+      });
+    });
+  });
 
   const modal = document.getElementById('site-modal');
   const modalTitle = document.getElementById('modal-title');
@@ -62,4 +67,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeModal();
   });
+
+  // Em Equipe (/admin/funcionarios), destaca ou recolhe os dados de veículo conforme o papel.
+  const seletorPapel = document.querySelector('select[name="tipo"]');
+  const grupoEntregador = document.querySelector('[data-grupo-entregador]');
+  if (seletorPapel && grupoEntregador) {
+    const atualizarPapel = () => {
+      grupoEntregador.hidden = seletorPapel.value !== 'entregador';
+    };
+    seletorPapel.addEventListener('change', atualizarPapel);
+    atualizarPapel();
+  }
 });

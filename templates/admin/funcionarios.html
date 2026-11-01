@@ -1,56 +1,55 @@
-{% extends "base.html" %}
-{% block titulo %}Funcionários{% endblock %}
+{% extends "painel_base.html" %}
+{% import "componentes/ui.html" as ui with context %}
+{% block titulo %}Equipe | Brasa do Cerrado{% endblock %}
+{% set PAPEIS = {'atendente': 'Atendente / caixa', 'cozinha': 'Cozinha', 'entregador': 'Entregador', 'gerente': 'Gerente', 'admin': 'Administrador'} %}
 {% block conteudo %}
-    <h1>Funcionários</h1>
-    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
-    <table>
-        <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Ativo</th></tr></thead>
-        <tbody>
-            {% for usuario in funcionarios %}
-            <tr>
-                <td>{{ usuario.nome }}</td>
-                <td>{{ usuario.email }}</td>
-                <td>{{ usuario.tipo }}</td>
-                <td>{{ 'Sim' if usuario.ativo else 'Não' }}</td>
-            </tr>
+    {{ ui.cabecalho('Equipe', 'Quem acessa o painel e o que cada pessoa pode fazer.') }}
+    {{ ui.erro(erro) }}
+
+    <div class="duas-colunas duas-colunas--lista">
+        <section aria-label="Pessoas da equipe">
+            {% if funcionarios %}
+            <div class="tabela-rolagem">
+                <table class="tabela tabela--fichas">
+                    <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Situação</th></tr></thead>
+                    <tbody>
+                        {% for usuario in funcionarios %}
+                        <tr>
+                            <td><strong>{{ usuario.nome }}</strong></td>
+                            <td data-rotulo="E-mail">{{ usuario.email }}</td>
+                            <td data-rotulo="Papel">{{ PAPEIS.get(usuario.tipo, usuario.tipo) }}</td>
+                            <td data-rotulo="Situação">{{ ui.selo_sim_nao(usuario.ativo) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% else %}
-            <tr><td colspan="4">Nenhum funcionário cadastrado.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            {{ ui.vazio('Ninguém cadastrado na equipe ainda') }}
+            {% endif %}
+        </section>
 
-    <h2>Novo funcionário</h2>
-    <form method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <label for="nome">Nome</label>
-        <input type="text" id="nome" name="nome" required>
-
-        <label for="email">E-mail</label>
-        <input type="email" id="email" name="email" required>
-
-        <label for="tipo">Papel</label>
-        <select id="tipo" name="tipo" required>
-            <option value="atendente">Atendente/Caixa</option>
-            <option value="cozinha">Cozinha</option>
-            <option value="entregador">Entregador</option>
-            <option value="gerente">Gerente</option>
-            <option value="admin">Administrador</option>
-        </select>
-
-        <label for="cargo">Cargo</label>
-        <input type="text" id="cargo" name="cargo">
-
-        <label for="veiculo">Veículo (se entregador)</label>
-        <input type="text" id="veiculo" name="veiculo">
-
-        <label for="placa">Placa (se entregador)</label>
-        <input type="text" id="placa" name="placa">
-
-        <label for="senha">Senha provisória</label>
-        <input type="password" id="senha" name="senha" required minlength="8">
-
-        <button type="submit">Cadastrar</button>
-    </form>
-
-    <p><a href="{{ url_for('admin.painel') }}">Voltar ao painel</a></p>
+        {% call ui.cartao('Nova pessoa', apoio='A senha é provisória: peça para trocar no primeiro acesso.', classe='cartao--destaque') %}
+        <form class="formulario" method="post">
+            {{ ui.csrf() }}
+            {{ ui.campo('nome', 'Nome', obrigatorio=True) }}
+            {{ ui.campo('email', 'E-mail', tipo='email', obrigatorio=True) }}
+            {% call ui.selecao('tipo', 'Papel') %}
+                {% for valor, rotulo in PAPEIS.items() %}
+                <option value="{{ valor }}">{{ rotulo }}</option>
+                {% endfor %}
+            {% endcall %}
+            {{ ui.campo('cargo', 'Cargo', attrs={'placeholder': 'Ex.: Pizzaiolo, Caixa'}) }}
+            <fieldset class="grupo grupo--recuado" data-grupo-entregador>
+                <legend>Dados do entregador <small>Preencha quando o papel for entregador.</small></legend>
+                <div class="formulario formulario--duas">
+                    {{ ui.campo('veiculo', 'Veículo', attrs={'placeholder': 'Moto'}) }}
+                    {{ ui.campo('placa', 'Placa', attrs={'autocapitalize': 'characters', 'placeholder': 'ABC-1D23'}) }}
+                </div>
+            </fieldset>
+            {{ ui.campo('senha', 'Senha provisória', tipo='password', obrigatorio=True, ajuda='Mínimo de 8 caracteres.', attrs={'minlength': 8, 'autocomplete': 'new-password'}) }}
+            <button class="botao botao--brasa" type="submit">Cadastrar pessoa</button>
+        </form>
+        {% endcall %}
+    </div>
 {% endblock %}

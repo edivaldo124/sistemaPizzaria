@@ -1,53 +1,56 @@
-{% extends "base.html" %}
-{% block titulo %}Produtos{% endblock %}
+{% extends "painel_base.html" %}
+{% import "componentes/ui.html" as ui with context %}
+{% block titulo %}Produtos | Brasa do Cerrado{% endblock %}
 {% block conteudo %}
-    <h1>Produtos</h1>
-    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
-    <table>
-        <thead><tr><th>Nome</th><th>Categoria</th><th>Preço</th><th>Disponível</th><th></th></tr></thead>
-        <tbody>
-            {% for produto in produtos %}
-            <tr>
-                <td>{{ produto.nome }}</td>
-                <td>{{ produto.categoria.nome if produto.categoria else '-' }}</td>
-                <td>{{ produto.preco | moeda if produto.preco is not none else '-' }}</td>
-                <td>{{ 'Sim' if produto.disponivel else 'Não' }}</td>
-                <td>
-                    <form method="post" action="{{ url_for('admin.alternar_disponibilidade_produto', produto_id=produto.id) }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit">{{ 'Marcar indisponível' if produto.disponivel else 'Marcar disponível' }}</button>
-                    </form>
-                </td>
-            </tr>
+    {{ ui.cabecalho('Produtos', 'Itens de preço fixo do cardápio: bebidas, sobremesas e sabores da casa.') }}
+    {{ ui.erro(erro) }}
+
+    <div class="duas-colunas duas-colunas--lista">
+        <section aria-label="Produtos cadastrados">
+            {% if produtos %}
+            <div class="tabela-rolagem">
+                <table class="tabela tabela--fichas">
+                    <thead><tr><th>Produto</th><th>Categoria</th><th class="col-num">Preço</th><th>No cardápio</th></tr></thead>
+                    <tbody>
+                        {% for produto in produtos %}
+                        <tr>
+                            <td>
+                                <strong>{{ produto.nome }}</strong>
+                                {% if produto.descricao %}<small>{{ produto.descricao }}</small>{% endif %}
+                            </td>
+                            <td data-rotulo="Categoria">{{ produto.categoria.nome if produto.categoria else '-' }}</td>
+                            <td data-rotulo="Preço" class="col-num">{{ produto.preco | moeda if produto.preco is not none else '-' }}</td>
+                            <td data-rotulo="No cardápio">
+                                <div class="situacao-acao">
+                                    {{ ui.selo_sim_nao(produto.disponivel, 'Disponível', 'Esgotado') }}
+                                    {{ ui.botao_post(url_for('admin.alternar_disponibilidade_produto', produto_id=produto.id), 'Marcar esgotado' if produto.disponivel else 'Ativar no cardápio', 'contorno', 'botao--pequeno') }}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% else %}
-            <tr><td colspan="5">Nenhum produto cadastrado.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            {{ ui.vazio('Nenhum produto cadastrado', 'Cadastre o primeiro produto no formulário ao lado.') }}
+            {% endif %}
+        </section>
 
-    <h2>Novo produto</h2>
-    <form method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <label for="nome">Nome</label>
-        <input type="text" id="nome" name="nome" required>
-
-        <label for="categoria_id">Categoria</label>
-        <select id="categoria_id" name="categoria_id" required>
-            {% for categoria in categorias %}
-            <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
-            {% else %}
-            <option value="" disabled>Nenhuma categoria cadastrada</option>
-            {% endfor %}
-        </select>
-
-        <label for="preco">Preço</label>
-        <input type="number" step="0.01" min="0" id="preco" name="preco" required placeholder="0.00">
-
-        <label for="descricao">Descrição</label>
-        <textarea id="descricao" name="descricao"></textarea>
-
-        <button type="submit">Criar</button>
-    </form>
-
-    <p><a href="{{ url_for('admin.painel') }}">Voltar ao painel</a></p>
+        {% call ui.cartao('Novo produto', classe='cartao--destaque') %}
+        <form class="formulario" method="post">
+            {{ ui.csrf() }}
+            {{ ui.campo('nome', 'Nome', obrigatorio=True) }}
+            {% call ui.selecao('categoria_id', 'Categoria') %}
+                {% for categoria in categorias %}
+                <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                {% else %}
+                <option value="" disabled selected>Cadastre uma categoria primeiro</option>
+                {% endfor %}
+            {% endcall %}
+            {{ ui.campo('preco', 'Preço (R$)', tipo='number', obrigatorio=True, attrs={'step': '0.01', 'min': '0', 'inputmode': 'decimal', 'placeholder': '0,00'}) }}
+            {{ ui.area_texto('descricao', 'Descrição', placeholder='Aparece no cardápio, abaixo do nome.') }}
+            <button class="botao botao--brasa" type="submit">Cadastrar produto</button>
+        </form>
+        {% endcall %}
+    </div>
 {% endblock %}

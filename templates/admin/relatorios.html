@@ -1,62 +1,66 @@
-{% extends "base.html" %}
-{% block titulo %}Relatórios de vendas{% endblock %}
-{% block conteudo %}
-    <h1>Relatório de vendas</h1>
+{% extends "painel_base.html" %}
+{% import "componentes/ui.html" as ui with context %}
+{% block titulo %}Relatórios | Brasa do Cerrado{% endblock %}
 
-    <form method="get">
-        <label>De <input type="date" name="inicio" value="{{ inicio.strftime('%Y-%m-%d') }}"></label>
-        <label>Até <input type="date" name="fim" value="{{ fim.strftime('%Y-%m-%d') }}"></label>
-        <button type="submit">Filtrar</button>
+{# Tabela com barra de magnitude embutida: série única, o valor escrito ao lado da barra. #}
+{% macro tabela_barras(titulo, cabecalhos, linhas, maximo, moeda_valor=False) -%}
+<section class="relatorio" aria-labelledby="rel-{{ titulo | lower | replace(' ', '-') }}">
+    <h2 id="rel-{{ titulo | lower | replace(' ', '-') }}">{{ titulo }}</h2>
+    {% if linhas %}
+    <div class="tabela-rolagem">
+        <table class="tabela tabela-barras">
+            <thead><tr>{% for c in cabecalhos %}<th{% if not loop.first %} class="col-num"{% endif %}>{{ c }}</th>{% endfor %}</tr></thead>
+            <tbody>
+                {% for rotulo, valor, extra in linhas %}
+                <tr>
+                    <td>
+                        <strong>{{ rotulo }}</strong>
+                        <span class="barra" aria-hidden="true"><span style="width: {{ ((valor / maximo * 100) if maximo else 0) | round(1) }}%"></span></span>
+                    </td>
+                    <td class="col-num">{{ valor | moeda if moeda_valor else valor }}</td>
+                    {% if extra is not none %}<td class="col-num">{{ extra | moeda }}</td>{% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="relatorio__vazio">Sem vendas registradas neste período.</p>
+    {% endif %}
+</section>
+{%- endmacro %}
+
+{% block conteudo %}
+    {{ ui.cabecalho('Relatório de vendas', 'Pedidos não cancelados no período escolhido.') }}
+    {{ ui.erro(erro) }}
+
+    <form class="filtro-periodo" method="get">
+        {{ ui.campo('inicio', 'De', tipo='date', valor=inicio.strftime('%Y-%m-%d'), obrigatorio=True) }}
+        {{ ui.campo('fim', 'Até', tipo='date', valor=fim.strftime('%Y-%m-%d'), obrigatorio=True) }}
+        <button class="botao botao--brasa" type="submit">Aplicar período</button>
     </form>
 
-    <p>Pedidos no período: {{ dados.quantidade_pedidos }}</p>
-    <p>Total vendido: {{ dados.total_vendas | moeda }}</p>
+    <div class="metricas">
+        {{ ui.metrica('Pedidos no período', dados.quantidade_pedidos, 'carvao') }}
+        {{ ui.metrica('Total vendido', dados.total_vendas | moeda, 'pequi') }}
+        {{ ui.metrica('Ticket médio', ((dados.total_vendas / dados.quantidade_pedidos) if dados.quantidade_pedidos else 0) | moeda) }}
+    </div>
 
-    <h2>Por forma de pagamento</h2>
-    <table>
-        <thead><tr><th>Forma</th><th>Total</th></tr></thead>
-        <tbody>
-            {% for forma, total in dados.por_forma_pagamento.items() %}
-            <tr><td>{{ forma | forma_pagamento }}</td><td>{{ total | moeda }}</td></tr>
-            {% else %}
-            <tr><td colspan="2">Sem dados no período.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="relatorios">
+        {% set formas = [] %}
+        {% for forma, total in dados.por_forma_pagamento.items() %}{% set _ = formas.append((forma | forma_pagamento, total, none)) %}{% endfor %}
+        {{ tabela_barras('Por forma de pagamento', ['Forma', 'Total'], formas | sort(attribute='1', reverse=true), (formas | map(attribute='1') | max) if formas else 0, moeda_valor=True) }}
 
-    <h2>Produtos mais vendidos</h2>
-    <table>
-        <thead><tr><th>Produto</th><th>Quantidade</th><th>Total</th></tr></thead>
-        <tbody>
-            {% for nome, info in dados.por_produto.items() %}
-            <tr><td>{{ nome }}</td><td>{{ info.quantidade }}</td><td>{{ info.total | moeda }}</td></tr>
-            {% else %}
-            <tr><td colspan="3">Sem dados no período.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        {% set horas = [] %}
+        {% for hora, quantidade in dados.por_hora.items() | sort %}{% set _ = horas.append(('%02dh' | format(hora), quantidade, none)) %}{% endfor %}
+        {{ tabela_barras('Pedidos por horário', ['Hora', 'Pedidos'], horas, (horas | map(attribute='1') | max) if horas else 0) }}
 
-    <h2>Sabores mais vendidos</h2>
-    <table>
-        <thead><tr><th>Sabor</th><th>Quantidade</th></tr></thead>
-        <tbody>
-            {% for nome, info in dados.por_sabor.items() %}
-            <tr><td>{{ nome }}</td><td>{{ info.quantidade }}</td></tr>
-            {% else %}
-            <tr><td colspan="2">Sem dados no período.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        {% set produtos = [] %}
+        {% for nome, info in dados.por_produto.items() %}{% set _ = produtos.append((nome, info.quantidade, info.total)) %}{% endfor %}
+        {{ tabela_barras('Produtos mais vendidos', ['Produto', 'Qtd.', 'Total'], (produtos | sort(attribute='1', reverse=true))[:10], (produtos | map(attribute='1') | max) if produtos else 0) }}
 
-    <h2>Pedidos por horário</h2>
-    <table>
-        <thead><tr><th>Hora</th><th>Pedidos</th></tr></thead>
-        <tbody>
-            {% for hora, quantidade in dados.por_hora.items() %}
-            <tr><td>{{ '%02d:00' | format(hora) }}</td><td>{{ quantidade }}</td></tr>
-            {% else %}
-            <tr><td colspan="2">Sem dados no período.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        {% set sabores = [] %}
+        {% for nome, info in dados.por_sabor.items() %}{% set _ = sabores.append((nome, info.quantidade, none)) %}{% endfor %}
+        {{ tabela_barras('Sabores mais pedidos', ['Sabor', 'Qtd.'], (sabores | sort(attribute='1', reverse=true))[:10], (sabores | map(attribute='1') | max) if sabores else 0) }}
+    </div>
 {% endblock %}

@@ -1,26 +1,48 @@
-{% extends "base.html" %}
-{% block titulo %}Administração{% endblock %}
+{% extends "painel_base.html" %}
+{% import "componentes/ui.html" as ui with context %}
+{% block titulo %}Resumo do dia | Brasa do Cerrado{% endblock %}
 {% block conteudo %}
-    <h1>Painel administrativo</h1>
-    {% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
-    <ul>
-        <li><a href="{{ url_for('admin.categorias') }}">Categorias</a></li>
-        <li><a href="{{ url_for('admin.produtos') }}">Produtos</a></li>
-        <li><a href="{{ url_for('admin.regioes_entrega') }}">Regiões de entrega</a></li>
-        <li><a href="{{ url_for('admin.funcionarios') }}">Funcionários</a></li>
-        <li><a href="{{ url_for('admin.pedidos') }}">Pedidos</a></li>
-        <li><a href="{{ url_for('admin.relatorios') }}">Relatórios de vendas</a></li>
-        <li><a href="{{ url_for('admin.configuracao') }}">Configuração da loja</a></li>
-        <li><a href="{{ url_for('cozinha.fila_pedidos') }}">Fila da cozinha</a></li>
-        <li><a href="{{ url_for('entrega.despacho') }}">Despacho de entregas</a></li>
-    </ul>
+    {% call ui.cabecalho('Resumo do dia', 'Movimento das últimas 24 horas.') %}
+        {{ ui.link_botao(url_for('cozinha.fila_pedidos'), 'Abrir cozinha', 'contorno') }}
+        {{ ui.link_botao(url_for('entrega.despacho'), 'Despachar entregas', 'brasa') }}
+    {% endcall %}
+    {{ ui.erro(erro) }}
 
-    <h2>Pedidos nas últimas 24h</h2>
-    <p>Total: {{ pedidos_hoje | length }}</p>
-    <p>Faturamento: {{ pedidos_hoje | sum(attribute='total') | moeda }}</p>
-    {% if not pedidos_hoje %}
-    <p>Nenhum pedido registrado nas últimas 24h.</p>
-    {% endif %}
+    {% set em_andamento = pedidos_hoje | rejectattr('status', 'in', ['entregue', 'cancelado']) | list %}
+    {% set validos = pedidos_hoje | rejectattr('status', 'equalto', 'cancelado') | list %}
+    {% set faturamento = validos | map(attribute='total') | select | sum %}
+    <div class="metricas">
+        {{ ui.metrica('Pedidos em 24h', pedidos_hoje | length, 'carvao') }}
+        {{ ui.metrica('Em andamento', em_andamento | length, 'pequi') }}
+        {{ ui.metrica('Faturamento', faturamento | moeda) }}
+        {{ ui.metrica('Ticket médio', ((faturamento / (validos | length)) if validos else 0) | moeda) }}
+    </div>
 
-    <p><a href="{{ url_for('cardapio.pagina_cardapio') }}">Voltar ao cardápio</a></p>
+    <section class="bloco" aria-labelledby="titulo-recentes">
+        <div class="bloco__topo">
+            <h2 id="titulo-recentes">Pedidos recentes</h2>
+            <a class="link" href="{{ url_for('admin.pedidos') }}">Ver os últimos 7 dias</a>
+        </div>
+        {% if pedidos_hoje %}
+        <div class="tabela-rolagem">
+            <table class="tabela tabela--fichas">
+                <thead><tr><th>Pedido</th><th>Cliente</th><th>Hora</th><th>Tipo</th><th>Situação</th><th class="col-num">Total</th></tr></thead>
+                <tbody>
+                    {% for pedido in (pedidos_hoje | sort(attribute='criado_em', reverse=true))[:8] %}
+                    <tr>
+                        <td><a class="link num" href="{{ url_for('pedido.acompanhar', numero=pedido.numero) }}">Pedido #{{ pedido.numero }}</a></td>
+                        <td data-rotulo="Cliente">{{ pedido.cliente.usuario.nome if (pedido.cliente and pedido.cliente.usuario) else 'Balcão' }}</td>
+                        <td data-rotulo="Hora" class="num">{{ pedido.criado_em | data_hora('%H:%M') }}</td>
+                        <td data-rotulo="Tipo">{{ pedido.tipo | tipo_pedido }}</td>
+                        <td data-rotulo="Situação">{{ ui.selo_status(pedido.status) }}</td>
+                        <td data-rotulo="Total" class="col-num">{{ pedido.total | moeda if pedido.total is not none else '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        {{ ui.vazio('Nenhum pedido nas últimas 24 horas', 'Quando o primeiro pedido chegar, ele aparece aqui e na fila da cozinha.') }}
+        {% endif %}
+    </section>
 {% endblock %}
