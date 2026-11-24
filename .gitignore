@@ -14,3 +14,6 @@ graphify-out/
 # Understand Anything (arquivos locais; o resto de .ua/ deve ser commitado)
 .ua/intermediate/
 .ua/diff-overlay.json
+
+# relatórios de segurança ficam fora do repositório público
+security_best_practices_report.md
